@@ -75,4 +75,14 @@ export const projects: Project[] = [
     github: "https://github.com/Vazquez-Ernesto",
     role: "personal",
   },
+  {
+    id: "aboutme-portfolio-v1",
+    title: "Ernesto Vazquez AboutMe (v1)",
+    description:
+      "Original personal portfolio built with vanilla HTML, CSS, and JavaScript. Foundational version showcasing early web development skills and project demonstration techniques before modern framework adoption.",
+    technologies: ["HTML5", "CSS3", "JavaScript", "GitHub Pages"],
+    github: "https://github.com/Vazquez-Ernesto/Ernesto-Vazquez-AboutMe",
+    live: "https://vazquez-ernesto.github.io/Ernesto-Vazquez-AboutMe/",
+    role: "portfolio",
+  },
 ];
