@@ -1,0 +1,129 @@
+---
+const navItems = [
+  { label: "About", href: "#about" },
+  { label: "Experience", href: "#experience" },
+  { label: "Skills", href: "#skills" },
+  { label: "Projects", href: "#projects" },
+  { label: "Contact", href: "#contact" },
+];
+---
+
+<header
+  id="site-header"
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+>
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="#" class="text-brand-green font-bold text-xl font-mono tracking-tight">
+      EV<span class="text-brand-red">.</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden md:flex items-center gap-8">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class="text-brand-muted hover:text-brand-text text-sm font-medium transition-colors"
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <!-- CTA -->
+    <a
+      href="/cv.pdf"
+      download
+      class="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-brand-green text-brand-green text-sm font-medium rounded hover:bg-brand-green hover:text-brand-bg transition-all"
+    >
+      Resume ↓
+    </a>
+
+    <!-- Mobile hamburger -->
+    <button
+      id="menu-btn"
+      class="md:hidden text-brand-muted hover:text-brand-text transition-colors"
+      aria-label="Toggle navigation menu"
+    >
+      <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <svg id="icon-close" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div
+    id="mobile-menu"
+    class="hidden md:hidden bg-brand-card border-t border-brand-border"
+  >
+    <nav class="flex flex-col py-2">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class="mobile-nav-link px-6 py-3 text-brand-muted hover:text-brand-text hover:bg-brand-border/50 text-sm transition-colors"
+        >
+          {item.label}
+        </a>
+      ))}
+      <div class="px-6 py-3">
+        <a
+          href="/cv.pdf"
+          download
+          class="inline-block px-4 py-2 border border-brand-green text-brand-green text-sm rounded hover:bg-brand-green hover:text-brand-bg transition-all"
+        >
+          Resume ↓
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById("site-header");
+  const menuBtn = document.getElementById("menu-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const iconOpen = document.getElementById("icon-open");
+  const iconClose = document.getElementById("icon-close");
+
+  // Sticky glass effect on scroll
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 60) {
+      header?.classList.add(
+        "bg-brand-bg/90",
+        "backdrop-blur-md",
+        "border-b",
+        "border-brand-border"
+      );
+    } else {
+      header?.classList.remove(
+        "bg-brand-bg/90",
+        "backdrop-blur-md",
+        "border-b",
+        "border-brand-border"
+      );
+    }
+  });
+
+  // Toggle mobile menu
+  menuBtn?.addEventListener("click", () => {
+    const isHidden = mobileMenu?.classList.contains("hidden");
+    mobileMenu?.classList.toggle("hidden");
+    iconOpen?.classList.toggle("hidden", !isHidden);
+    iconClose?.classList.toggle("hidden", isHidden);
+  });
+
+  // Close mobile menu on link click
+  document.querySelectorAll(".mobile-nav-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      mobileMenu?.classList.add("hidden");
+      iconOpen?.classList.remove("hidden");
+      iconClose?.classList.add("hidden");
+    });
+  });
+</script>

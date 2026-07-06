@@ -1,0 +1,78 @@
+---
+import { profile } from '../data/profile';
+import SectionHeader from './ui/SectionHeader.astro';
+
+const stats = [
+  { value: "5+", label: "Years of Experience" },
+  { value: "4", label: "Companies" },
+  { value: "2", label: "Industry Domains" },
+  { value: "3+", label: "Test Frameworks" },
+];
+
+const bioParagraphs = profile.bio.split('\n\n');
+---
+
+<section id="about" class="py-24 bg-brand-card">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title="About Me" subtitle="Who I am" />
+
+    <div class="grid md:grid-cols-2 gap-12 items-start mt-14">
+      <!-- Bio -->
+      <div class="fade-in">
+        {bioParagraphs.map((para) => (
+          <p class="text-brand-muted leading-relaxed mb-5 text-base">
+            {para}
+          </p>
+        ))}
+
+        <!-- AI in QA callout -->
+        <div class="mt-6 border border-brand-green/30 bg-brand-green/5 rounded-xl p-5">
+          <p class="text-brand-green text-sm font-semibold mb-3">
+            Currently exploring AI in QA:
+          </p>
+          <ul class="text-brand-muted text-sm space-y-1.5">
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green text-xs">▹</span>
+              Test scenario generation with LLMs
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green text-xs">▹</span>
+              Automated result analysis
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green text-xs">▹</span>
+              AI-assisted debugging and validation
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-brand-green text-xs">▹</span>
+              Intelligent test suite maintenance
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 gap-4 fade-in">
+        {stats.map((stat) => (
+          <div class="bg-brand-bg border border-brand-border rounded-xl p-6 text-center hover:border-brand-green/50 transition-colors">
+            <div class="text-4xl font-bold text-brand-green mb-2 font-mono">
+              {stat.value}
+            </div>
+            <div class="text-brand-muted text-sm">{stat.label}</div>
+          </div>
+        ))}
+
+        <!-- Location card -->
+        <div class="col-span-2 bg-brand-bg border border-brand-border rounded-xl p-4 flex items-center gap-4 hover:border-brand-green/50 transition-colors">
+          <div class="w-10 h-10 rounded-lg bg-brand-green/10 flex items-center justify-center shrink-0">
+            <span class="text-brand-green text-lg">📍</span>
+          </div>
+          <div>
+            <p class="text-brand-muted text-xs">Location</p>
+            <p class="text-brand-text text-sm font-medium">{profile.location}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

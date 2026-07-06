@@ -1,0 +1,27 @@
+---
+import { profile } from '../data/profile';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="py-8 bg-brand-card border-t border-brand-border">
+  <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-brand-muted text-sm">
+      © {year}{" "}
+      <span class="text-brand-green font-medium">Ernesto Vázquez</span>.
+      Built with Astro.
+    </p>
+    <div class="flex items-center gap-6">
+      {profile.socials.map((social) => (
+        <a
+          href={social.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-brand-muted hover:text-brand-green text-sm transition-colors"
+        >
+          {social.platform}
+        </a>
+      ))}
+    </div>
+  </div>
+</footer>

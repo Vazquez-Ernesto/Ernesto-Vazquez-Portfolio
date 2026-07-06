@@ -1,0 +1,39 @@
+---
+import { skills } from '../data/skills';
+import SectionHeader from './ui/SectionHeader.astro';
+
+const accentClasses = {
+  green: "text-brand-green border-brand-green/30 bg-brand-green/5",
+  red: "text-brand-red border-brand-red/30 bg-brand-red/5",
+  neutral: "text-brand-text border-brand-border bg-brand-card/50",
+};
+---
+
+<section id="skills" class="py-24 bg-brand-card">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title="Skills" subtitle="Tools & technologies" />
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-14">
+      {skills.map((group) => (
+        <div
+          class={`border rounded-xl p-6 hover:scale-[1.01] transition-all duration-300 fade-in ${accentClasses[group.accent]}`}
+        >
+          <!-- Category header -->
+          <div class="flex items-center gap-3 mb-5">
+            <span class="text-2xl">{group.icon}</span>
+            <h3 class="font-semibold text-base">{group.category}</h3>
+          </div>
+
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2">
+            {group.items.map((item) => (
+              <span class="px-2.5 py-1 text-xs rounded-full border border-current/20 bg-current/5 text-current opacity-90 hover:opacity-100 transition-opacity">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

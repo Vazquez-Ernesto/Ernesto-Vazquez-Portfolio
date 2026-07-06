@@ -1,0 +1,118 @@
+---
+import { profile } from '../data/profile';
+---
+
+<section
+  id="home"
+  class="relative min-h-screen flex items-center justify-center overflow-hidden"
+>
+  <!-- Grid background -->
+  <div class="absolute inset-0 hero-grid opacity-100"></div>
+
+  <!-- Green radial glow -->
+  <div
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
+    style="background: radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%);"
+  ></div>
+
+  <!-- Content -->
+  <div class="relative z-10 max-w-4xl mx-auto px-6 text-center pt-20">
+    <!-- Profile photo -->
+    <div class="mb-8 flex justify-center">
+      <div class="relative">
+        <div class="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-brand-green/40 shadow-lg shadow-brand-green/10">
+          <img
+            src="/images/Profile.jpg"
+            alt="Ernesto Vázquez"
+            width="144"
+            height="144"
+            class="w-full h-full object-cover"
+            loading="eager"
+          />
+        </div>
+        <!-- Green glow ring -->
+        <div class="absolute inset-0 rounded-full border border-brand-green/20 scale-110 animate-pulse"></div>
+      </div>
+    </div>
+
+    <!-- Availability badge -->
+    <div class="mb-8">
+      <span
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-card border border-brand-border text-brand-green text-sm font-medium"
+      >
+        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+        {profile.availability}
+      </span>
+    </div>
+
+    <!-- Name -->
+    <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+      <span class="text-brand-text">Hi, I'm </span>
+      <span class="text-brand-green">Ernesto Vázquez</span>
+    </h1>
+
+    <!-- Title -->
+    <p class="text-xl md:text-2xl text-brand-muted font-medium mb-4">
+      QA Automation Engineer &amp; Full Stack Developer with AI
+    </p>
+    <p class="text-brand-muted mb-10 max-w-xl mx-auto">
+      Building quality systems for banking &amp; telecom. Founder of{" "}
+      <a
+        href="https://qadvanced-io.vercel.app"
+        class="text-brand-green hover:underline"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        QAdvanced
+      </a>.
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex flex-wrap items-center justify-center gap-4 mb-14">
+      <a
+        href="#experience"
+        class="px-7 py-3 bg-brand-green text-brand-bg font-semibold rounded-lg hover:bg-brand-green-dark transition-colors"
+      >
+        View My Work
+      </a>
+      <a
+        href={profile.cvUrl}
+        download
+        class="px-7 py-3 border border-brand-border text-brand-text rounded-lg hover:border-brand-green hover:text-brand-green transition-colors"
+      >
+        Download CV
+      </a>
+    </div>
+
+    <!-- Social links -->
+    <div class="flex items-center justify-center gap-8">
+      {profile.socials.map((social) => (
+        <a
+          href={social.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-brand-muted hover:text-brand-green text-sm font-medium transition-colors"
+        >
+          {social.platform}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-brand-muted/50 animate-bounce">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+</section>

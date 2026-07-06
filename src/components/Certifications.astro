@@ -1,0 +1,26 @@
+---
+import { certifications } from '../data/certifications';
+import SectionHeader from './ui/SectionHeader.astro';
+---
+
+<section id="certifications" class="py-24 bg-brand-bg">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title="Certifications" subtitle="Continuous learning" />
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-14">
+      {certifications.map((cert) => (
+        <div class="bg-brand-card border border-brand-border rounded-xl p-5 hover:border-brand-green/40 transition-all duration-300 flex gap-4 fade-in">
+          <div class="w-10 h-10 rounded-lg bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+            <span class="text-brand-green text-lg">🎓</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-brand-text text-sm font-medium leading-snug">
+              {cert.name}
+            </p>
+            <p class="text-brand-muted text-xs mt-1.5">{cert.issuer}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

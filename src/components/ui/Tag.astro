@@ -1,0 +1,17 @@
+---
+interface Props {
+  label: string;
+  variant?: "green" | "default";
+}
+
+const { label, variant = "default" } = Astro.props;
+
+const classes = {
+  green: "px-2.5 py-1 text-xs rounded bg-brand-green/10 text-brand-green border border-brand-green/20",
+  default: "px-2.5 py-1 text-xs rounded bg-brand-card text-brand-muted border border-brand-border hover:border-brand-green/40 hover:text-brand-text transition-colors",
+};
+---
+
+<span class={classes[variant]}>
+  {label}
+</span>
