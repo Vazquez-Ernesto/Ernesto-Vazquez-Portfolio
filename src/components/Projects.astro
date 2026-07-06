@@ -1,85 +1,92 @@
 ---
 import SectionHeader from './ui/SectionHeader.astro';
 import Tag from './ui/Tag.astro';
-
-const projects = [
-  {
-    name: "QAdvanced",
-    description:
-      "QA consulting and automation company focused on helping teams build quality software through modern testing strategies, automation frameworks, and AI-powered tools.",
-    url: "https://qadvanced-io.vercel.app",
-    tags: ["QA Consulting", "Automation", "AI", "Testing"],
-    status: "Live",
-    featured: true,
-    role: "Founder",
-  },
-  {
-    name: "QA Automation Portfolio",
-    description:
-      "Original portfolio showcasing QA automation projects and testing strategies. Built with vanilla HTML/CSS/JS — the starting point that led to this current version.",
-    url: "https://vazquez-ernesto.github.io/Portafolio-QA-Automation/",
-    tags: ["QA", "Selenium", "Cypress", "Portfolio"],
-    status: "Live",
-    featured: false,
-    role: "Creator",
-  },
-];
+import { projects } from '../data/projects';
 ---
 
 <section id="projects" class="py-24 bg-brand-card">
-  <div class="max-w-6xl mx-auto px-6">
+  <div class="max-w-7xl mx-auto px-6">
     <SectionHeader title="Projects" subtitle="What I've built" />
 
-    <div class="grid md:grid-cols-2 gap-6 mt-14">
-      {projects.map((project) => (
-        <div
-          class={`bg-brand-bg rounded-xl p-6 border transition-all duration-300 hover:-translate-y-1 fade-in ${
-            project.featured
-              ? "border-brand-green/50 shadow-[0_0_30px_rgba(34,197,94,0.06)]"
-              : "border-brand-border hover:border-brand-green/30"
-          }`}
-        >
-          {project.featured && (
-            <span class="inline-block px-2.5 py-1 bg-brand-green/10 text-brand-green text-xs font-medium rounded border border-brand-green/30 mb-4">
-              ★ Featured
-            </span>
-          )}
-
-          <div class="flex items-start justify-between mb-3">
-            <div>
-              <h3 class="text-brand-text font-semibold text-lg">{project.name}</h3>
-              <p class="text-brand-muted text-xs mt-0.5">{project.role}</p>
-            </div>
-            <span class="flex items-center gap-1.5 text-brand-green text-xs font-medium shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse"></span>
-              {project.status}
-            </span>
-          </div>
-
-          <p class="text-brand-muted text-sm leading-relaxed mb-5">
-            {project.description}
-          </p>
-
-          <div class="flex flex-wrap gap-2 mb-5">
-            {project.tags.map((tag) => (
-              <Tag label={tag} />
-            ))}
-          </div>
-
-          <a
-            href={project.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 text-brand-green text-sm font-medium hover:underline"
+    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6 mt-14">
+      {projects.map((project) => {
+        const roleColors = {
+          portfolio: "bg-brand-green/10 text-brand-green border-brand-green/30",
+          framework: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+          demonstration: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+          personal: "bg-brand-muted/10 text-brand-muted border-brand-muted/30",
+        };
+        
+        return (
+          <div
+            class="bg-brand-bg rounded-xl p-6 border border-brand-border transition-all duration-300 hover:-translate-y-1 hover:border-brand-green/50 fade-in group"
           >
-            Visit Project
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="7" y1="17" x2="17" y2="7"></line>
-              <polyline points="7 7 17 7 17 17"></polyline>
-            </svg>
-          </a>
-        </div>
-      ))}
+            {/* Role Badge */}
+            <div class="flex items-start justify-between mb-4">
+              <span class={`inline-block px-2.5 py-1 text-xs font-medium rounded border capitalize ${roleColors[project.role]}`}>
+                {project.role}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 class="text-brand-text font-semibold text-lg mb-3 group-hover:text-brand-green transition-colors">
+              {project.title}
+            </h3>
+
+            {/* Description */}
+            <p class="text-brand-muted text-sm leading-relaxed mb-5">
+              {project.description}
+            </p>
+
+            {/* Technologies */}
+            <div class="flex flex-wrap gap-2 mb-6">
+              {project.technologies.map((tech) => (
+                <Tag label={tech} />
+              ))}
+            </div>
+
+            {/* Links */}
+            <div class="flex gap-3 items-center">
+              {project.live && (
+                <a
+                  href={project.live}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-brand-bg transition-colors text-sm font-medium border border-brand-green/30"
+                >
+                  Live
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                </a>
+              )}
+              
+              {project.github && (
+                <a
+                  href={project.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-brand-muted hover:text-brand-green hover:border-brand-green/50 transition-colors text-sm font-medium border border-brand-border"
+                >
+                  GitHub
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Footer Note -->
+    <div class="mt-16 text-center">
+      <p class="text-brand-muted text-sm">
+        Find more on <a href="https://github.com/Vazquez-Ernesto" target="_blank" rel="noopener noreferrer" class="text-brand-green hover:underline">GitHub</a> — complete automation frameworks, testing patterns, and code samples.
+      </p>
     </div>
   </div>
 </section>
