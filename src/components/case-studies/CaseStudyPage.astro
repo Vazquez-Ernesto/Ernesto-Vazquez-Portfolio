@@ -1,0 +1,232 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { CaseStudy } from '../../data/caseStudies';
+import { getCaseStudyPath, getCaseStudyTranslation } from '../../data/caseStudies';
+
+interface Props {
+  caseStudy: CaseStudy;
+}
+
+const { caseStudy } = Astro.props;
+const translation = getCaseStudyTranslation(caseStudy);
+const translationPath = translation ? getCaseStudyPath(translation) : undefined;
+const isSpanish = caseStudy.locale === "es";
+
+const copy = isSpanish
+  ? {
+      back: "Volver a proyectos",
+      language: "Read in English",
+      caseStudy: "Caso de estudio",
+      problem: "Problema",
+      context: "Contexto",
+      constraints: "Restricciones",
+      alternatives: "Alternativas consideradas",
+      decision: "Decisión",
+      implementation: "Implementación",
+      evidence: "Evidencia",
+      result: "Resultado",
+      learnings: "Qué aprendí",
+      next: "Siguiente hipótesis",
+      selected: "Seleccionada",
+      rejected: "Descartada",
+      maturity: "Madurez",
+      source: "Ver repositorio",
+    }
+  : {
+      back: "Back to projects",
+      language: "Leer en español",
+      caseStudy: "Case Study",
+      problem: "Problem",
+      context: "Context",
+      constraints: "Constraints",
+      alternatives: "Alternatives considered",
+      decision: "Decision",
+      implementation: "Implementation",
+      evidence: "Evidence",
+      result: "Result",
+      learnings: "What I learned",
+      next: "Next hypothesis",
+      selected: "Selected",
+      rejected: "Rejected",
+      maturity: "Maturity",
+      source: "View repository",
+    };
+
+const pageTitle = `${caseStudy.title} — Ernesto Vázquez`;
+---
+
+<BaseLayout title={pageTitle} description={caseStudy.summary} lang={caseStudy.locale}>
+  <header class="border-b border-brand-border bg-brand-bg/95">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
+      <a href="/" class="text-brand-green font-bold text-xl font-mono">
+        EV<span class="text-brand-red">.</span>
+      </a>
+      <nav class="flex items-center gap-4 text-sm" aria-label={isSpanish ? "Navegación del caso" : "Case study navigation"}>
+        <a href="/#projects" class="text-brand-muted hover:text-brand-text transition-colors">
+          {copy.back}
+        </a>
+        {translationPath && (
+          <a
+            href={translationPath}
+            class="px-3 py-1.5 border border-brand-border text-brand-text hover:border-brand-green hover:text-brand-green transition-colors"
+          >
+            {copy.language}
+          </a>
+        )}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article>
+      <section class="hero-grid border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-20 md:py-28">
+          <div class="flex flex-wrap items-center gap-3 mb-7 text-xs font-medium uppercase text-brand-muted">
+            <span class="text-brand-green">{copy.caseStudy}</span>
+            <span aria-hidden="true">/</span>
+            <time datetime={caseStudy.publishedAt}>{caseStudy.publishedAt}</time>
+            <span aria-hidden="true">/</span>
+            <span>{copy.maturity}: {caseStudy.maturity}</span>
+          </div>
+
+          <h1 class="max-w-4xl text-4xl md:text-6xl font-bold leading-tight text-brand-text">
+            {caseStudy.title}
+          </h1>
+          <p class="max-w-3xl mt-7 text-lg md:text-xl leading-relaxed text-brand-muted">
+            {caseStudy.summary}
+          </p>
+
+          <a
+            href="https://github.com/Vazquez-Ernesto/Ernesto-Vazquez-Portfolio"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex mt-9 text-sm font-medium text-brand-green hover:underline"
+          >
+            {copy.source} ↗
+          </a>
+        </div>
+      </section>
+
+      <section class="border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20 grid md:grid-cols-2 gap-12">
+          <div>
+            <h2 class="text-xs uppercase text-brand-green font-semibold mb-4">01 — {copy.problem}</h2>
+            <p class="text-xl leading-relaxed text-brand-text">{caseStudy.problem}</p>
+          </div>
+          <div>
+            <h2 class="text-xs uppercase text-brand-green font-semibold mb-4">02 — {copy.context}</h2>
+            <p class="leading-relaxed text-brand-muted">{caseStudy.context}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-brand-card border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20">
+          <h2 class="text-2xl md:text-3xl font-semibold mb-8">{copy.constraints}</h2>
+          <ol class="grid md:grid-cols-2 gap-x-12 gap-y-6">
+            {caseStudy.constraints.map((constraint, index) => (
+              <li class="flex gap-4 text-brand-muted leading-relaxed">
+                <span class="font-mono text-brand-green">{String(index + 1).padStart(2, "0")}</span>
+                <span>{constraint}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section class="border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20">
+          <p class="text-xs uppercase text-brand-green font-semibold mb-4">03</p>
+          <h2 class="text-2xl md:text-3xl font-semibold mb-10">{copy.alternatives}</h2>
+          <div class="grid lg:grid-cols-3 gap-5">
+            {caseStudy.options.map((option) => (
+              <div class={`border p-6 ${option.status === "selected" ? "border-brand-green bg-brand-green/5" : "border-brand-border"}`}>
+                <span class={`text-xs uppercase font-semibold ${option.status === "selected" ? "text-brand-green" : "text-brand-muted"}`}>
+                  {option.status === "selected" ? copy.selected : copy.rejected}
+                </span>
+                <h3 class="mt-3 text-lg font-semibold text-brand-text">{option.title}</h3>
+                <p class="mt-4 text-sm leading-relaxed text-brand-muted">{option.rationale}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-brand-card border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20 grid lg:grid-cols-[0.8fr_1.2fr] gap-12">
+          <div>
+            <p class="text-xs uppercase text-brand-green font-semibold mb-4">04</p>
+            <h2 class="text-2xl md:text-3xl font-semibold">{copy.decision}</h2>
+          </div>
+          <p class="text-xl leading-relaxed text-brand-text border-l-2 border-brand-green pl-6">
+            {caseStudy.decision}
+          </p>
+        </div>
+      </section>
+
+      <section class="border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20">
+          <p class="text-xs uppercase text-brand-green font-semibold mb-4">05</p>
+          <h2 class="text-2xl md:text-3xl font-semibold mb-9">{copy.implementation}</h2>
+          <ol class="border-l border-brand-border">
+            {caseStudy.implementation.map((step, index) => (
+              <li class="relative pl-8 pb-8 last:pb-0">
+                <span class="absolute -left-3 top-0 w-6 h-6 flex items-center justify-center bg-brand-bg border border-brand-green text-brand-green text-xs font-mono">
+                  {index + 1}
+                </span>
+                <p class="leading-relaxed text-brand-muted">{step}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section class="bg-brand-card border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20">
+          <p class="text-xs uppercase text-brand-green font-semibold mb-4">06</p>
+          <h2 class="text-2xl md:text-3xl font-semibold mb-9">{copy.evidence}</h2>
+          <div class="divide-y divide-brand-border border-y border-brand-border">
+            {caseStudy.evidence.map((item) => (
+              <div class="py-6 grid md:grid-cols-[1fr_1.4fr_auto] gap-4 md:gap-8 items-start">
+                <h3 class="font-medium text-brand-text">{item.claim}</h3>
+                <p class="text-sm leading-relaxed text-brand-muted">{item.observation}</p>
+                <span class={`w-fit px-2 py-1 text-xs font-semibold border ${item.maturity === "H2" ? "text-brand-green border-brand-green/40" : "text-brand-muted border-brand-border"}`}>
+                  {item.maturity}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class="border-b border-brand-border">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20 grid lg:grid-cols-2 gap-12">
+          <div>
+            <h2 class="text-xs uppercase text-brand-green font-semibold mb-4">07 — {copy.result}</h2>
+            <p class="text-lg leading-relaxed text-brand-text">{caseStudy.result}</p>
+          </div>
+          <div>
+            <h2 class="text-xs uppercase text-brand-green font-semibold mb-4">08 — {copy.learnings}</h2>
+            <ul class="space-y-4">
+              {caseStudy.learnings.map((learning) => (
+                <li class="flex gap-3 text-brand-muted leading-relaxed">
+                  <span class="text-brand-green" aria-hidden="true">→</span>
+                  <span>{learning}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="hero-grid">
+        <div class="max-w-5xl mx-auto px-6 py-16 md:py-20">
+          <h2 class="text-xs uppercase text-brand-green font-semibold mb-4">09 — {copy.next}</h2>
+          <p class="max-w-4xl text-2xl md:text-3xl font-semibold leading-relaxed text-brand-text">
+            {caseStudy.nextHypothesis}
+          </p>
+        </div>
+      </section>
+    </article>
+  </main>
+</BaseLayout>

@@ -1,0 +1,17 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import CaseStudyPage from '../../../components/case-studies/CaseStudyPage.astro';
+import { getCaseStudies } from '../../../data/caseStudies';
+
+export const getStaticPaths = (() =>
+  getCaseStudies("es").map((caseStudy) => ({
+    params: { slug: caseStudy.slug },
+    props: { caseStudy },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { caseStudy } = Astro.props as Props;
+---
+
+<CaseStudyPage caseStudy={caseStudy} />

@@ -1,12 +1,22 @@
 ---
-import { profile } from '../data/profile';
 import SectionHeader from './ui/SectionHeader.astro';
+import { getProfile } from '../i18n/content';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const profile = getProfile(locale);
 
 const stats = [
-  { value: "5+", label: "Years of Experience" },
-  { value: "4", label: "Companies" },
-  { value: "2", label: "Industry Domains" },
-  { value: "3+", label: "Test Frameworks" },
+  { value: "5+", label: t.about.stats.years },
+  { value: "4", label: t.about.stats.companies },
+  { value: "2", label: t.about.stats.domains },
+  { value: "3+", label: t.about.stats.frameworks },
 ];
 
 const bioParagraphs = profile.bio.split('\n\n');
@@ -14,7 +24,7 @@ const bioParagraphs = profile.bio.split('\n\n');
 
 <section id="about" class="py-24 bg-brand-card">
   <div class="max-w-6xl mx-auto px-6">
-    <SectionHeader title="About Me" subtitle="Who I am" />
+    <SectionHeader title={t.about.title} subtitle={t.about.subtitle} />
 
     <div class="grid md:grid-cols-2 gap-12 items-start mt-14">
       <!-- Bio -->
@@ -28,25 +38,15 @@ const bioParagraphs = profile.bio.split('\n\n');
         <!-- AI in QA callout -->
         <div class="mt-6 border border-brand-green/30 bg-brand-green/5 rounded-xl p-5">
           <p class="text-brand-green text-sm font-semibold mb-3">
-            Currently exploring AI in QA:
+            {t.about.aiTitle}
           </p>
           <ul class="text-brand-muted text-sm space-y-1.5">
-            <li class="flex items-center gap-2">
-              <span class="text-brand-green text-xs">▹</span>
-              Test scenario generation with LLMs
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-brand-green text-xs">▹</span>
-              Automated result analysis
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-brand-green text-xs">▹</span>
-              AI-assisted debugging and validation
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="text-brand-green text-xs">▹</span>
-              Intelligent test suite maintenance
-            </li>
+            {t.about.aiItems.map((item) => (
+              <li class="flex items-center gap-2">
+                <span class="text-brand-green text-xs">▹</span>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -68,7 +68,7 @@ const bioParagraphs = profile.bio.split('\n\n');
             <span class="text-brand-green text-lg">📍</span>
           </div>
           <div>
-            <p class="text-brand-muted text-xs">Location</p>
+            <p class="text-brand-muted text-xs">{t.about.location}</p>
             <p class="text-brand-text text-sm font-medium">{profile.location}</p>
           </div>
         </div>

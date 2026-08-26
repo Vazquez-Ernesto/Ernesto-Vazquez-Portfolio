@@ -1,0 +1,181 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const suggestedQuestions = t.knowledge.suggestions;
+---
+
+<section id="knowledge" class="py-24 bg-brand-bg border-y border-brand-border">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title={t.knowledge.title} subtitle={t.knowledge.subtitle} />
+
+    <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-12 lg:gap-20 mt-14">
+      <div>
+        <form id="knowledge-query-form" class="space-y-5" data-locale={locale}>
+          <label for="knowledge-question" class="block text-sm font-semibold text-brand-text">
+            {t.knowledge.label}
+          </label>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              id="knowledge-question"
+              name="question"
+              type="search"
+              maxlength="180"
+              autocomplete="off"
+              placeholder={t.knowledge.placeholder}
+              aria-controls="knowledge-result"
+              class="min-w-0 flex-1 h-12 px-4 bg-brand-card border border-brand-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-green"
+            />
+            <button
+              type="submit"
+              class="h-12 px-5 bg-brand-green text-brand-bg font-semibold hover:bg-brand-green-dark transition-colors"
+            >
+              {t.knowledge.button} <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="mt-6 flex flex-wrap gap-2" aria-label="Suggested questions">
+          {suggestedQuestions.map((question) => (
+            <button
+              type="button"
+              data-question={question}
+              class="knowledge-suggestion px-3 py-2 text-left text-xs text-brand-muted border border-brand-border hover:text-brand-green hover:border-brand-green/50 transition-colors"
+            >
+              {question}
+            </button>
+          ))}
+        </div>
+
+        <div class="mt-8 border-l-2 border-brand-border pl-4 text-xs leading-relaxed text-brand-muted">
+          {t.knowledge.note}
+        </div>
+      </div>
+
+      <div
+        id="knowledge-result"
+        class="min-h-72 border-y border-brand-border py-7"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div id="knowledge-empty" class="h-full flex items-center">
+          <p class="max-w-md text-lg leading-relaxed text-brand-muted">
+            {t.knowledge.emptyState}
+          </p>
+        </div>
+
+        <div id="knowledge-answer" class="hidden">
+          <div class="flex flex-wrap items-center gap-3 text-xs uppercase font-semibold">
+            <span class="text-brand-green">QueryPortfolioKnowledge</span>
+            <span aria-hidden="true" class="text-brand-border">/</span>
+            <span id="knowledge-confidence" class="text-brand-muted"></span>
+          </div>
+
+          <p id="knowledge-answer-text" class="mt-6 text-xl leading-relaxed text-brand-text"></p>
+
+          <div id="knowledge-evidence-section" class="mt-9">
+            <h3 id="knowledge-evidence-title" class="text-sm font-semibold text-brand-text">Evidence</h3>
+            <div id="knowledge-evidence" class="mt-3 divide-y divide-brand-border border-y border-brand-border"></div>
+          </div>
+
+          <div id="knowledge-references-section" class="mt-7">
+            <h3 id="knowledge-references-title" class="text-sm font-semibold text-brand-text">References</h3>
+            <div id="knowledge-references" class="mt-3 flex flex-wrap gap-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { queryPortfolioKnowledge } from '../features/knowledge-explorer/queryPortfolioKnowledge';
+  import { isSafeReferenceHref } from '../features/knowledge-explorer/referenceSafety';
+  import type { KnowledgeAnswer, KnowledgeEvidence, KnowledgeReference } from '../features/knowledge-explorer/types';
+
+  const form = document.querySelector<HTMLFormElement>('#knowledge-query-form');
+  const pageLocale = form?.dataset.locale === 'es' ? 'es' : 'en';
+  const input = document.querySelector<HTMLInputElement>('#knowledge-question');
+  const emptyState = document.querySelector<HTMLElement>('#knowledge-empty');
+  const answerPanel = document.querySelector<HTMLElement>('#knowledge-answer');
+  const answerText = document.querySelector<HTMLElement>('#knowledge-answer-text');
+  const confidence = document.querySelector<HTMLElement>('#knowledge-confidence');
+  const evidenceSection = document.querySelector<HTMLElement>('#knowledge-evidence-section');
+  const evidenceTitle = document.querySelector<HTMLElement>('#knowledge-evidence-title');
+  const evidenceList = document.querySelector<HTMLElement>('#knowledge-evidence');
+  const referencesSection = document.querySelector<HTMLElement>('#knowledge-references-section');
+  const referencesTitle = document.querySelector<HTMLElement>('#knowledge-references-title');
+  const referencesList = document.querySelector<HTMLElement>('#knowledge-references');
+
+  function createReference(reference: KnowledgeReference) {
+    if (!isSafeReferenceHref(reference.href)) return null;
+
+    const link = document.createElement('a');
+    link.href = reference.href;
+    link.textContent = `${reference.label} ↗`;
+    link.className = 'text-sm text-brand-green hover:underline';
+    if (reference.href.startsWith('http')) {
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+    return link;
+  }
+
+  function createEvidenceItem(item: KnowledgeEvidence) {
+    const row = document.createElement('div');
+    row.className = 'py-4 grid sm:grid-cols-[auto_1fr_auto] gap-3 items-start';
+    const maturity = document.createElement('span');
+    maturity.className = 'w-fit px-2 py-1 text-xs font-semibold border border-brand-green/40 text-brand-green';
+    maturity.textContent = item.maturity;
+    const statement = document.createElement('p');
+    statement.className = 'text-sm leading-relaxed text-brand-muted';
+    statement.textContent = item.statement;
+    row.append(maturity, statement);
+    const reference = createReference(item.source);
+    if (reference) row.append(reference);
+    return row;
+  }
+
+  function renderEvidence(result: KnowledgeAnswer) {
+    evidenceList?.replaceChildren(...result.evidence.map(createEvidenceItem));
+    const references = result.references
+      .map(createReference)
+      .filter((reference): reference is HTMLAnchorElement => reference !== null);
+    referencesList?.replaceChildren(...references);
+    evidenceSection?.classList.toggle('hidden', result.evidence.length === 0);
+    referencesSection?.classList.toggle('hidden', references.length === 0);
+  }
+
+  function renderResult(result: KnowledgeAnswer) {
+    const spanish = result.locale === 'es';
+    emptyState?.classList.add('hidden');
+    answerPanel?.classList.remove('hidden');
+    if (answerText) answerText.textContent = result.answer;
+    if (confidence) confidence.textContent = `${spanish ? 'Coincidencia' : 'Match confidence'}: ${result.confidence}`;
+    if (evidenceTitle) evidenceTitle.textContent = spanish ? 'Evidencia' : 'Evidence';
+    if (referencesTitle) referencesTitle.textContent = spanish ? 'Referencias' : 'References';
+    renderEvidence(result);
+  }
+
+  function submitQuestion(question: string) {
+    if (input) input.value = question;
+    renderResult(queryPortfolioKnowledge({ question, locale: pageLocale }));
+  }
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitQuestion(input?.value ?? '');
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.knowledge-suggestion').forEach((button) => {
+    button.addEventListener('click', () => submitQuestion(button.dataset.question ?? ''));
+  });
+</script>

@@ -2,8 +2,8 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  // NOTE: Change to 'hybrid' when adding the AI agent API routes
-  // The src/pages/api/ directory is already reserved for that purpose.
+  // Keep static output until a real use case requires on-demand rendering.
+  // Then add the deployment adapter and opt out per route with `prerender = false`.
   output: 'static',
   vite: {
     plugins: [tailwindcss()],

@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Hero from '../../components/Hero.astro';
+import About from '../../components/About.astro';
+import Experience from '../../components/Experience.astro';
+import Skills from '../../components/Skills.astro';
+import Certifications from '../../components/Certifications.astro';
+import SkillGraph from '../../components/SkillGraph.astro';
+import Projects from '../../components/Projects.astro';
+import KnowledgeExplorer from '../../components/KnowledgeExplorer.astro';
+import Contact from '../../components/Contact.astro';
+import Footer from '../../components/Footer.astro';
+import { ui } from '../../i18n/ui';
+
+const locale = "es";
+const t = ui[locale];
+---
+
+<BaseLayout title={t.meta.title} description={t.meta.description} lang={locale}>
+  <Header locale={locale} />
+  <main>
+    <Hero locale={locale} />
+    <About locale={locale} />
+    <Experience locale={locale} />
+    <Skills locale={locale} />
+    <Certifications locale={locale} />
+    <SkillGraph locale={locale} />
+    <Projects locale={locale} />
+    <KnowledgeExplorer locale={locale} />
+    <Contact locale={locale} />
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>
+
+<script>
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+</script>

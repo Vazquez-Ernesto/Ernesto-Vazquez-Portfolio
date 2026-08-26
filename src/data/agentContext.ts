@@ -1,8 +1,8 @@
 /**
- * Agent Context — Single source of truth for AI agents.
+ * Experimental context projection for future AI evaluation.
  *
- * This module aggregates all portfolio data into structured formats
- * ready to be injected as system prompts or knowledge base entries.
+ * This legacy module aggregates part of the portfolio catalog. It is not the
+ * canonical knowledge model used by product capabilities.
  *
  * Future usage:
  *   import { generateAgentContext } from './agentContext';

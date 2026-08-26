@@ -1,0 +1,299 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { getSkillGroups } from '../i18n/content';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+import { traceSkillEvidence } from '../features/skill-evidence/traceSkillEvidence';
+import type { SkillTraceResult } from '../features/skill-evidence/types';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const groups = getSkillGroups(locale);
+
+// Pre-trace every catalog skill at build time. The page ships data, not logic.
+const allSkills = groups.flatMap((group) => group.items);
+const traces: Record<string, SkillTraceResult> = {};
+for (const item of allSkills) {
+  traces[item] = traceSkillEvidence({ skill: item, locale });
+}
+const initialSkill = "Playwright";
+
+const groupLabels: Record<string, string> = {
+  project: t.evidence.groupProject,
+  experience: t.evidence.groupExperience,
+  certification: t.evidence.groupCertification,
+};
+---
+
+<section id="evidence" class="py-24">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title={t.evidence.title} subtitle={t.evidence.subtitle} />
+    <p class="text-brand-muted text-sm mt-4 max-w-2xl">{t.evidence.instructions}</p>
+
+    <!-- Skill chips -->
+    <div class="flex flex-wrap gap-2 mt-8" role="group" aria-label={t.evidence.networkLabel}>
+      {allSkills.map((skill) => (
+        <button
+          type="button"
+          data-skill={skill}
+          class="skill-chip px-3 py-1.5 text-xs rounded-full border border-brand-border text-brand-muted hover:border-brand-green hover:text-brand-green transition-all aria-pressed:border-brand-green aria-pressed:text-brand-green aria-pressed:bg-brand-green/10"
+          aria-pressed={skill === initialSkill ? "true" : "false"}
+        >
+          {skill}
+        </button>
+      ))}
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-10 mt-10 items-start">
+      <!-- Network -->
+      <div class="border border-brand-border rounded-xl bg-brand-card p-4">
+        <svg
+          id="skill-network"
+          viewBox="0 0 640 640"
+          class="w-full h-auto"
+          role="img"
+          aria-label={t.evidence.networkLabel}
+        ></svg>
+        <div class="flex items-center gap-6 mt-4 px-2 text-xs text-brand-muted">
+          <span class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded-full border-2 border-brand-green bg-brand-green/20"></span>
+            {t.evidence.legendH2}
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded-full border-2 border-dashed border-brand-muted"></span>
+            {t.evidence.legendH1}
+          </span>
+        </div>
+      </div>
+
+      <!-- Detail -->
+      <div id="skill-detail" class="space-y-6"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .edge-flow {
+    stroke-dasharray: 6 8;
+    animation: edge-dash 1.4s linear infinite;
+  }
+  @keyframes edge-dash {
+    to {
+      stroke-dashoffset: -14;
+    }
+  }
+  .node-pulse {
+    animation: node-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes node-pulse {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .edge-flow,
+    .node-pulse {
+      animation: none;
+    }
+  }
+</style>
+
+<script
+  define:vars={{
+    tracesJson: JSON.stringify(traces),
+    initialSkill,
+    groupLabels,
+    untracedTitle: t.evidence.untrackedTitle,
+    untracedBody: t.evidence.untrackedBody,
+  }}
+>
+  const traces = JSON.parse(tracesJson);
+  const svg = document.getElementById("skill-network");
+  const detail = document.getElementById("skill-detail");
+  const chips = document.querySelectorAll(".skill-chip");
+
+  const CX = 320;
+  const CY = 320;
+  const RADIUS = 205;
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  const kindColor = {
+    project: "#22c55e",
+    experience: "#f1f5f9",
+    certification: "#94a3b8",
+  };
+
+  function escapeHtml(value) {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function truncate(value, max) {
+    return value.length > max ? value.slice(0, max - 1) + "…" : value;
+  }
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs)) {
+      el.setAttribute(key, String(value));
+    }
+    return el;
+  }
+
+  function renderNetwork(result) {
+    svg.innerHTML = "";
+    const nodes = result.evidence;
+
+    // Edges first, so nodes render on top
+    nodes.forEach((node, index) => {
+      const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
+      const x = CX + RADIUS * Math.cos(angle);
+      const y = CY + RADIUS * Math.sin(angle);
+      svg.appendChild(
+        svgEl("line", {
+          x1: CX,
+          y1: CY,
+          x2: x,
+          y2: y,
+          stroke: node.maturity === "H2" ? "#22c55e" : "#94a3b8",
+          "stroke-width": node.maturity === "H2" ? 1.6 : 1,
+          "stroke-opacity": node.maturity === "H2" ? 0.55 : 0.35,
+          class: "edge-flow",
+        })
+      );
+    });
+
+    // Center: the skill
+    svg.appendChild(
+      svgEl("circle", { cx: CX, cy: CY, r: 62, fill: "#22c55e", opacity: 0.12, class: "node-pulse" })
+    );
+    svg.appendChild(
+      svgEl("circle", { cx: CX, cy: CY, r: 52, fill: "#161616", stroke: "#22c55e", "stroke-width": 2 })
+    );
+    const skillLabel = svgEl("text", {
+      x: CX,
+      y: CY + 4,
+      "text-anchor": "middle",
+      fill: "#f1f5f9",
+      "font-size": 13,
+      "font-weight": 600,
+    });
+    skillLabel.textContent = truncate(result.skill, 16);
+    svg.appendChild(skillLabel);
+
+    // Evidence nodes
+    nodes.forEach((node, index) => {
+      const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
+      const x = CX + RADIUS * Math.cos(angle);
+      const y = CY + RADIUS * Math.sin(angle);
+      const color = kindColor[node.kind] ?? "#94a3b8";
+      const h2 = node.maturity === "H2";
+
+      if (h2) {
+        svg.appendChild(
+          svgEl("circle", { cx: x, cy: y, r: 34, fill: color, opacity: 0.12, class: "node-pulse" })
+        );
+      }
+      const circle = svgEl("circle", {
+        cx: x,
+        cy: y,
+        r: 26,
+        fill: "#161616",
+        stroke: color,
+        "stroke-width": h2 ? 2 : 1.4,
+      });
+      if (!h2) circle.setAttribute("stroke-dasharray", "4 4");
+      svg.appendChild(circle);
+
+      const badge = svgEl("text", {
+        x: x,
+        y: y + 4,
+        "text-anchor": "middle",
+        fill: color,
+        "font-size": 10,
+        "font-weight": 700,
+      });
+      badge.textContent = node.maturity;
+      svg.appendChild(badge);
+
+      const label = svgEl("text", {
+        x: x,
+        y: y + 44,
+        "text-anchor": "middle",
+        fill: "#94a3b8",
+        "font-size": 10,
+      });
+      label.textContent = truncate(node.label, 22);
+      svg.appendChild(label);
+    });
+  }
+
+  function renderDetail(result) {
+    if (result.status !== "traced" || result.evidence.length === 0) {
+      detail.innerHTML = `
+        <div class="border border-dashed border-brand-border rounded-xl p-6">
+          <h3 class="font-semibold text-brand-text">${escapeHtml(untracedTitle)}</h3>
+          <p class="text-sm text-brand-muted mt-2">${escapeHtml(untracedBody)}</p>
+        </div>`;
+      return;
+    }
+
+    const groups = ["project", "experience", "certification"]
+      .map((kind) => ({ kind, nodes: result.evidence.filter((n) => n.kind === kind) }))
+      .filter((group) => group.nodes.length > 0);
+
+    detail.innerHTML = groups
+      .map(
+        (group) => `
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-brand-muted mb-3">
+            ${escapeHtml(groupLabels[group.kind] ?? group.kind)}
+          </h3>
+          <div class="space-y-3">
+            ${group.nodes
+              .map((node) => {
+                const badgeClass =
+                  node.maturity === "H2"
+                    ? "border-brand-green text-brand-green"
+                    : "border-brand-muted text-brand-muted";
+                const inner = `
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="font-medium text-sm text-brand-text">${escapeHtml(node.label)}</span>
+                    <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold rounded border ${badgeClass}">${node.maturity}</span>
+                  </div>
+                  <p class="text-xs text-brand-muted mt-1.5">${escapeHtml(node.detail)}</p>`;
+                return node.href
+                  ? `<a href="${escapeHtml(node.href)}" ${node.href.startsWith("http") ? 'target="_blank" rel="noopener noreferrer"' : ""} class="block border border-brand-border rounded-lg p-4 bg-brand-card hover:border-brand-green/50 transition-colors">${inner}</a>`
+                  : `<div class="border border-brand-border rounded-lg p-4 bg-brand-card">${inner}</div>`;
+              })
+              .join("")}
+          </div>
+        </div>`
+      )
+      .join("");
+  }
+
+  function select(skill) {
+    const result = traces[skill];
+    if (!result) return;
+    chips.forEach((chip) =>
+      chip.setAttribute("aria-pressed", chip.dataset.skill === skill ? "true" : "false")
+    );
+    renderNetwork(result);
+    renderDetail(result);
+  }
+
+  chips.forEach((chip) => chip.addEventListener("click", () => select(chip.dataset.skill)));
+  select(initialSkill);
+</script>

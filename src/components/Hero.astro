@@ -1,5 +1,15 @@
 ---
-import { profile } from '../data/profile';
+import { getProfile } from '../i18n/content';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const profile = getProfile(locale);
 ---
 
 <section
@@ -47,23 +57,23 @@ import { profile } from '../data/profile';
 
     <!-- Name -->
     <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-      <span class="text-brand-text">Hi, I'm </span>
+      <span class="text-brand-text">{t.hero.greeting} </span>
       <span class="text-brand-green">Ernesto Vázquez</span>
     </h1>
 
     <!-- Title -->
     <p class="text-xl md:text-2xl text-brand-muted font-medium mb-4">
-      QA Automation Engineer &amp; Full Stack Developer with AI
+      {t.hero.title}
     </p>
     <p class="text-brand-muted mb-10 max-w-xl mx-auto">
-      Building quality systems for banking &amp; telecom. Founder of{" "}
+      {t.hero.taglinePre}{" "}
       <a
         href="https://qadvanced-io.vercel.app"
         class="text-brand-green hover:underline"
         target="_blank"
         rel="noopener noreferrer"
       >
-        QAdvanced
+        {t.hero.taglineLink}
       </a>.
     </p>
 
@@ -73,14 +83,14 @@ import { profile } from '../data/profile';
         href="#experience"
         class="px-7 py-3 bg-brand-green text-brand-bg font-semibold rounded-lg hover:bg-brand-green-dark transition-colors"
       >
-        View My Work
+        {t.hero.viewWork}
       </a>
       <a
         href={profile.cvUrl}
         download
         class="px-7 py-3 border border-brand-border text-brand-text rounded-lg hover:border-brand-green hover:text-brand-green transition-colors"
       >
-        Download CV
+        {t.hero.downloadCv}
       </a>
     </div>
 
@@ -100,7 +110,7 @@ import { profile } from '../data/profile';
   </div>
 
   <!-- Scroll indicator -->
-  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-brand-muted/50 animate-bounce">
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-brand-muted/50 animate-bounce" role="presentation" aria-label={t.hero.scrollLabel}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"

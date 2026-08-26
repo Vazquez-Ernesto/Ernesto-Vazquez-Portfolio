@@ -1,15 +1,31 @@
 ---
 import SectionHeader from './ui/SectionHeader.astro';
 import Tag from './ui/Tag.astro';
-import { projects } from '../data/projects';
+import { getProjects } from '../i18n/content';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+import { getCaseStudies, getCaseStudyPath } from '../data/caseStudies';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const projects = getProjects(locale);
+
+const caseStudiesByProject = new Map(
+  getCaseStudies(locale).map((caseStudy) => [caseStudy.projectId, caseStudy])
+);
 ---
 
 <section id="projects" class="py-24 bg-brand-card">
   <div class="max-w-7xl mx-auto px-6">
-    <SectionHeader title="Projects" subtitle="What I've built" />
+    <SectionHeader title={t.projects.title} subtitle={t.projects.subtitle} />
 
     <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6 mt-14">
       {projects.map((project) => {
+        const caseStudy = caseStudiesByProject.get(project.id);
         const roleColors = {
           portfolio: "bg-brand-green/10 text-brand-green border-brand-green/30",
           framework: "bg-blue-500/10 text-blue-400 border-blue-500/30",
@@ -46,7 +62,17 @@ import { projects } from '../data/projects';
             </div>
 
             {/* Links */}
-            <div class="flex gap-3 items-center">
+            <div class="flex flex-wrap gap-3 items-center">
+              {caseStudy && (
+                <a
+                  href={getCaseStudyPath(caseStudy)}
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-green text-brand-bg hover:bg-brand-green-dark transition-colors text-sm font-semibold border border-brand-green"
+                >
+                  {t.projects.caseStudy}
+                  <span aria-hidden="true">→</span>
+                </a>
+              )}
+
               {project.live && (
                 <a
                   href={project.live}
@@ -85,7 +111,7 @@ import { projects } from '../data/projects';
     <!-- Footer Note -->
     <div class="mt-16 text-center">
       <p class="text-brand-muted text-sm">
-        Find more on <a href="https://github.com/Vazquez-Ernesto" target="_blank" rel="noopener noreferrer" class="text-brand-green hover:underline">GitHub</a> — complete automation frameworks, testing patterns, and code samples.
+        {t.projects.footerPre} <a href="https://github.com/Vazquez-Ernesto" target="_blank" rel="noopener noreferrer" class="text-brand-green hover:underline">GitHub</a> {t.projects.footerPost}
       </p>
     </div>
   </div>

@@ -1,5 +1,0 @@
-# AI Agent API routes — reserved for future implementation
-# When adding the AI chatbot/agent, change astro.config.mjs output to 'hybrid'
-# and create src/pages/api/chat.ts
-#
-# The knowledge base is already ready in: src/data/agentContext.ts

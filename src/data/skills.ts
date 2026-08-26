@@ -22,19 +22,19 @@ export const skills: SkillGroup[] = [
     category: "Infrastructure & DevOps",
     icon: "🔧",
     items: ["Jenkins", "CI/CD Pipelines", "SSH Remote Execution", "Docker", "Git", "GitHub Actions"],
-    accent: "red",
+    accent: "green",
   },
   {
     category: "Testing Methodologies",
     icon: "🧪",
     items: ["E2E Testing", "API Testing", "BDD", "Regression Testing", "Exploratory Testing", "CDR Validation"],
-    accent: "neutral",
+    accent: "green",
   },
   {
     category: "Data & APIs",
     icon: "🗄️",
     items: ["REST APIs", "Postman", "SQL / DB Validation", "Log Analysis", "Data Reconciliation"],
-    accent: "neutral",
+    accent: "green",
   },
   {
     category: "AI in QA",

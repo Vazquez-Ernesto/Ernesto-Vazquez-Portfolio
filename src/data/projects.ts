@@ -13,7 +13,7 @@ export const projects: Project[] = [
     id: "portfolio",
     title: "Ernesto Vázquez Portfolio",
     description:
-      "Modern personal portfolio showcasing 5+ years of QA engineering and full-stack development expertise. Built with Astro 7 + Tailwind CSS v4, featuring agent-ready data layer architecture for future AI integration.",
+      "Static engineering portfolio showcasing 5+ years of QA automation and software development. It is also the first product used to test evidence-driven architectural decisions through EAPA.",
     technologies: ["Astro", "TypeScript", "Tailwind CSS v4", "Static Output"],
     github: "https://github.com/Vazquez-Ernesto/Ernesto-Vazquez-Portfolio",
     live: "https://ernesto-vazquez-portfolio.vercel.app/",

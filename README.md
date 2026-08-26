@@ -2,7 +2,7 @@
 
 > QA Automation Engineer & Full Stack Developer with AI | Founder [@QAdvanced](https://qadvanced-io.vercel.app)
 
-Modern personal portfolio built with **Astro 7 + Tailwind CSS v4**, designed with an agent-ready data layer for future AI integration.
+Static portfolio built with **Astro 7 + Tailwind CSS v4**. It is also the first reference implementation used to test EAPA, an evidence-driven methodology for evolving knowledge-centric engineering platforms.
 
 ---
 
@@ -19,8 +19,9 @@ Modern personal portfolio built with **Astro 7 + Tailwind CSS v4**, designed wit
 | Framework | [Astro 7](https://astro.build) — static output, island architecture |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com) — `@tailwindcss/vite` plugin |
 | Language | TypeScript (strict) |
+| Testing | [Vitest](https://vitest.dev) — deterministic capability tests |
 | Deploy | [Vercel](https://vercel.com) — CI/CD on push to `main` |
-| Future AI | OpenAI / Vercel AI SDK — endpoint ready at `/api/context.json` |
+| Knowledge projection | Static `/api/context.json` experiment — no LLM runtime or agents |
 
 ---
 
@@ -28,8 +29,12 @@ Modern personal portfolio built with **Astro 7 + Tailwind CSS v4**, designed wit
 
 - **Dark theme** with QAdvanced brand colors (green `#22c55e` / deep black `#0d0d0d`)
 - **Fully responsive** — 375px / 768px / 1440px
-- **Agent-ready data layer** — all content lives in typed TypeScript files under `src/data/`
-- **`/api/context.json`** — static endpoint that exposes a structured knowledge base for AI agents
+- **Bilingual EN/ES** — full Spanish homepage at `/es/` with language switch, translated content overlays
+- **Typed content catalog** — portfolio content lives in TypeScript files under `src/data/`
+- **Bilingual engineering case study** — problem, alternatives, decision, implementation, evidence, and learning
+- **Knowledge Explorer** — deterministic EN/ES answers with match confidence, evidence maturity, and references
+- **Skill Evidence network** — interactive SVG graph tracing each skill to its public evidence (H2 artifacts vs H1 claims), fail-closed for untraced skills
+- **`/api/context.json`** — experimental static projection of part of that catalog
 - **Performance-first** — static output, no JS frameworks, intersection observer animations
 - **SEO** — Open Graph meta, semantic HTML, descriptive alt text
 
@@ -45,13 +50,18 @@ ernesto-portfolio/
 │   └── images/
 │       └── Profile.jpg               ← profile photo
 ├── src/
-│   ├── data/                         ← single source of truth (feeds the AI agent)
+│   ├── data/                         ← typed product content
 │   │   ├── profile.ts                ← personal info, bio, social links
 │   │   ├── experience.ts             ← work history (4 companies, typed)
 │   │   ├── skills.ts                 ← skill groups by category
 │   │   ├── certifications.ts         ← certifications
-│   │   └── agentContext.ts           ← assembled knowledge base for LLMs
+│   │   ├── projects.ts               ← project catalog
+│   │   ├── caseStudies.ts            ← bilingual engineering case studies
+│   │   ├── publicKnowledge.ts         ← grounded public knowledge records
+│   │   └── agentContext.ts           ← experimental context projection
 │   ├── components/
+│   │   ├── case-studies/
+│   │   │   └── CaseStudyPage.astro   ← shared bilingual case template
 │   │   ├── Header.astro              ← sticky nav with glassmorphism
 │   │   ├── Hero.astro                ← fullscreen with profile photo
 │   │   ├── About.astro               ← bio + quick stats
@@ -59,19 +69,45 @@ ernesto-portfolio/
 │   │   ├── Skills.astro              ← tag grid by category
 │   │   ├── Certifications.astro      ← card grid
 │   │   ├── Projects.astro            ← featured projects
+│   │   ├── SkillGraph.astro          ← skill → evidence network (SVG, animated)
+│   │   ├── KnowledgeExplorer.astro    ← deterministic query interface
 │   │   ├── Contact.astro             ← contact links
 │   │   ├── Footer.astro
 │   │   └── ui/
 │   │       ├── SectionHeader.astro
 │   │       └── Tag.astro
+│   ├── features/
+│   │   ├── knowledge-explorer/
+│   │   │   ├── types.ts               ← capability contract
+│   │   │   ├── referenceSafety.ts     ← allowed href schemes
+│   │   │   └── queryPortfolioKnowledge.ts ← deterministic retrieval
+│   │   └── skill-evidence/
+│   │       ├── types.ts               ← TraceSkillEvidence contract
+│   │       └── traceSkillEvidence.ts  ← curated skill → evidence map
+│   ├── i18n/
+│   │   ├── locale.ts                  ← Locale type, routing helpers
+│   │   ├── ui.ts                      ← EN/ES UI strings (typed dictionary)
+│   │   └── content.ts                 ← Spanish content overlays
 │   ├── layouts/
 │   │   └── BaseLayout.astro          ← HTML shell, SEO meta, fonts
 │   ├── pages/
-│   │   ├── index.astro               ← single page
+│   │   ├── index.astro               ← English single page
+│   │   ├── es/index.astro            ← Spanish single page
+│   │   ├── case-studies/[slug].astro ← English static cases
+│   │   ├── es/casos-de-estudio/      ← Spanish static cases
 │   │   └── api/
-│   │       └── context.json.ts       ← AI agent endpoint
+│   │       └── context.json.ts       ← static context projection
 │   └── styles/
-│       └── global.css                ← Tailwind @theme tokens
+│       └── global.css                 ← Tailwind @theme tokens
+├── tests/
+│   ├── knowledge-explorer.test.ts     ← grounded-answer tests
+│   ├── skill-evidence.test.ts         ← traceability and fail-closed tests
+│   └── i18n.test.ts                   ← EN/ES parity tests
+├── docs/
+│   ├── eapa-manifesto.md             ← non-normative EAPA purpose
+│   └── rfcs/
+│       ├── RFC-000-eapa.md           ← constitution and reference architecture
+│       └── RFC-001-engineering-loop.md ← experimental engineering method
 ├── astro.config.mjs
 ├── tsconfig.json
 └── package.json
@@ -83,8 +119,8 @@ ernesto-portfolio/
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+
+- Node.js 22.12+
+- npm 9.6.5+
 
 ### Install
 
@@ -99,6 +135,12 @@ npm install
 ```bash
 npm run dev
 # → http://localhost:4321
+```
+
+### Test
+
+```bash
+npm test
 ```
 
 ### Build
@@ -124,9 +166,41 @@ npm run preview    # preview the production build locally
 
 ---
 
-## Agent-Ready Architecture
+## Current Knowledge Projection
 
-All portfolio content is stored as typed TypeScript objects in `src/data/`. This makes updating the portfolio trivial — and it's the foundation for the AI agent integration planned for Phase 2.
+### Executable capability
+
+`QueryPortfolioKnowledge` is the first product capability implemented from EAPA principles. It runs entirely in the browser over curated public records:
+
+```
+Question
+  ──► QueryPortfolioKnowledge
+  ──► deterministic record ranking
+  ──► answer + match confidence
+  ──► evidence maturity + references
+```
+
+The capability responds in English or Spanish and returns `insufficient` when published evidence cannot support an answer. It does not call an LLM, persist conversation memory, or generate new claims.
+
+### Second capability: TraceSkillEvidence
+
+`TraceSkillEvidence` answers a different question: given a skill from the public catalog, which projects, experiences, or certifications back it?
+
+```
+Skill
+  ──► TraceSkillEvidence
+  ──► curated evidence map (no inference)
+  ──► nodes grouped by kind, maturity H1/H2
+  ──► interactive network UI (SkillGraph)
+```
+
+Skills without curated evidence return `untraced` — the system prefers admitting "no public proof yet" over fabricating links. With two capabilities live, shared invariants can now be observed before any abstraction is extracted (EAPA P9).
+
+### Legacy projection
+
+Portfolio content is stored as typed TypeScript objects in `src/data/`. The current `agentContext.ts` module transforms part of that content into text and JSON during the static build.
+
+This is a product-specific DTO projection. It is **not yet** a domain model, retrieval system, RAG pipeline, agent runtime, memory layer, or provider abstraction.
 
 ### How it works
 
@@ -153,19 +227,23 @@ The static endpoint `/api/context.json` exposes:
 }
 ```
 
-### Phase 2 — AI Agent (planned)
+### Evidence-driven evolution
 
-The architecture is already prepared. Adding an AI agent only requires:
+AI capabilities will be introduced only after a real portfolio use case defines:
 
-1. **`src/pages/api/chat.ts`** — SSR endpoint consuming OpenAI / Vercel AI SDK
-2. **`src/components/ChatWidget.tsx`** — React island (`client:load`) with chat UI
-3. Switch `output: 'static'` → `output: 'hybrid'` in `astro.config.mjs`
+1. the knowledge and provenance required;
+2. an observable capability contract;
+3. why deterministic code is insufficient;
+4. evaluation and confidentiality criteria;
+5. the smallest infrastructure needed to validate the hypothesis.
 
-The agent will answer questions like:
-- *"Where does Ernesto work?"*
-- *"What testing frameworks does he use?"*
-- *"Does he have experience with CI/CD?"*
-- *"What projects has he built?"*
+If on-demand rendering becomes necessary, Astro will remain static by default and only the required routes will opt out of prerendering through the deployment adapter.
+
+The reasoning behind this evolution is documented in:
+
+- [EAPA Manifesto](docs/eapa-manifesto.md) — non-normative purpose and principles, currently H1.
+- [RFC-000 — EAPA Constitution](docs/rfcs/RFC-000-eapa.md) — reference boundaries and product-first guardrails.
+- [RFC-001 — Engineering Loop](docs/rfcs/RFC-001-engineering-loop.md) — experimental decision and evaluation process.
 
 ---
 

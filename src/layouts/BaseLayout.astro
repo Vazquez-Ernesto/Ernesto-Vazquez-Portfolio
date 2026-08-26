@@ -4,16 +4,18 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  lang?: "en" | "es";
 }
 
 const {
   title = "Ernesto Vázquez — QA Automation Engineer & Full Stack Developer",
   description = "QA Automation Engineer specialized in banking and telecom systems with 5+ years of experience. Founder of QAdvanced. Exploring AI in QA.",
+  lang = "en",
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang={lang} class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

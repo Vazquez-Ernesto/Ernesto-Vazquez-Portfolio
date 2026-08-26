@@ -1,11 +1,20 @@
 ---
-import { certifications } from '../data/certifications';
 import SectionHeader from './ui/SectionHeader.astro';
+import { certifications } from '../data/certifications';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
 ---
 
 <section id="certifications" class="py-24 bg-brand-bg">
   <div class="max-w-6xl mx-auto px-6">
-    <SectionHeader title="Certifications" subtitle="Continuous learning" />
+    <SectionHeader title={t.certifications.title} subtitle={t.certifications.subtitle} />
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-14">
       {certifications.map((cert) => (

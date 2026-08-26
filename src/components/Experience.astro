@@ -1,12 +1,22 @@
 ---
-import { experience } from '../data/experience';
 import SectionHeader from './ui/SectionHeader.astro';
 import Tag from './ui/Tag.astro';
+import { getExperience } from '../i18n/content';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+const experience = getExperience(locale);
 ---
 
 <section id="experience" class="py-24 bg-brand-bg">
   <div class="max-w-4xl mx-auto px-6">
-    <SectionHeader title="Experience" subtitle="Professional journey" />
+    <SectionHeader title={t.experience.title} subtitle={t.experience.subtitle} />
 
     <div class="relative mt-14">
       <!-- Vertical timeline line -->
