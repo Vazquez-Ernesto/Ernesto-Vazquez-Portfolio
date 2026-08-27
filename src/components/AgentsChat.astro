@@ -1,0 +1,358 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale];
+---
+
+<section id="agents" class="py-24 bg-brand-bg">
+  <div class="max-w-6xl mx-auto px-6">
+    <SectionHeader title={t.nav.agents} subtitle="Conversá con mis agentes especializados" />
+
+    <div class="grid lg:grid-cols-2 gap-8 mt-10">
+      <!-- Chat Panel -->
+      <div class="border border-brand-border rounded-xl bg-brand-card overflow-hidden flex flex-col h-[600px]">
+        <div class="p-4 border-b border-brand-border bg-brand-bg/50">
+          <h3 class="font-semibold text-brand-text flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-brand-green" id="agent-status"></span>
+            <span id="current-agent">{t.nav.agents}</span>
+          </h3>
+        </div>
+
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+          <!-- Messages will be inserted here -->
+          <div class="flex justify-center items-center h-full text-brand-muted">
+            <p>Escribí tu pregunta para empezar...</p>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-brand-border bg-brand-bg/50">
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="chat-input"
+              placeholder="¿Qué querés saber sobre Ernesto?"
+              class="flex-1 bg-brand-bg border border-brand-border rounded-lg px-4 py-2 text-brand-text placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-green"
+              aria-label="Tu mensaje"
+            />
+            <button
+              id="chat-send"
+              class="px-6 py-2 bg-brand-green text-brand-bg font-medium rounded-lg hover:bg-brand-green-dark transition-colors disabled:opacity-50"
+              aria-label="Enviar"
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Network Visualization -->
+      <div class="border border-brand-border rounded-xl bg-brand-card p-4">
+        <h3 class="font-semibold text-brand-text mb-4 flex items-center gap-2">
+          <span class="text-brand-green">●</span> Red de Agentes Activa
+        </h3>
+        <div id="agent-network" class="relative h-80">
+          <svg
+            id="network-svg"
+            viewBox="0 0 400 400"
+            class="w-full h-full"
+            role="img"
+            aria-label="Visualización de la red de agentes"
+          ></svg>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2" id="agent-legend"></div>
+      </div>
+    </div>
+
+    <!-- Suggested Questions -->
+    <div class="mt-10">
+      <h4 class="text-sm font-semibold text-brand-muted mb-4">Preguntas sugeridas:</h4>
+      <div class="flex flex-wrap gap-2" id="suggested-questions"></div>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  .message {
+    max-width: 80%;
+    padding: 0.5rem 1rem;
+    border-radius: 1.5rem;
+  }
+  .message-user {
+    margin-left: auto;
+    background-color: #22c55e;
+    color: #0d0d0d;
+    border-bottom-right-radius: 0;
+  }
+  .message-agent {
+    margin-right: auto;
+    background-color: #161616;
+    border: 1px solid #1f1f1f;
+    border-bottom-left-radius: 0;
+  }
+  .agent-node {
+    transition: all 0.3s;
+  }
+  .agent-node.active {
+    animation: pulse-ring 2s infinite;
+    box-shadow: 0 0 0 2px #22c55e;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+  .thinking-dots span {
+    display: inline-block;
+    width: 0.375rem;
+    height: 0.375rem;
+    background-color: #94a3b8;
+    border-radius: 9999px;
+    margin: 0 0.125rem;
+    animation: bounce 1.4s infinite ease-in-out both;
+  }
+  .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+  .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+</style>
+
+<script
+  define:vars={{
+    locale,
+    tAgents: t.nav.agents,
+    tSend: "Enviar",
+    tThinking: "Pensando...",
+    tError: "Error al conectar con los agentes. ¿Están corriendo en localhost:8081?",
+    suggestedQuestions: [
+      "¿Dónde trabaja Ernesto actualmente?",
+      "¿Qué proyectos tiene en GitHub?",
+      "¿Qué testing frameworks domina?",
+      "¿Qué es EAPA?",
+      "¿Cómo contactar a Ernesto?"
+    ]
+  }}
+>
+  const API_BASE = "http://localhost:8081/api";
+  const chatInput = document.getElementById("chat-input");
+  const chatSend = document.getElementById("chat-send");
+  const chatMessages = document.getElementById("chat-messages");
+  const agentStatus = document.getElementById("agent-status");
+  const currentAgentLabel = document.getElementById("current-agent");
+  const networkSvg = document.getElementById("network-svg");
+  const agentLegend = document.getElementById("agent-legend");
+  const suggestedContainer = document.getElementById("suggested-questions");
+
+  const agents = [
+    { id: "portfolio-coordinator", name: "Coordinator", emoji: "🎯", color: "#22c55e", x: 200, y: 50 },
+    { id: "experience-agent", name: "Experience", emoji: "💼", color: "#3b82f6", x: 80, y: 180 },
+    { id: "projects-agent", name: "Projects", emoji: "🚀", color: "#f59e0b", x: 320, y: 180 },
+    { id: "skills-qa-agent", name: "Skills QA", emoji: "⚡", color: "#ef4444", x: 80, y: 320 },
+    { id: "eapa-agent", name: "EAPA", emoji: "🧠", color: "#8b5cf6", x: 320, y: 320 },
+    { id: "contact-agent", name: "Contact", emoji: "📬", color: "#06b6d4", x: 200, y: 380 },
+  ];
+
+  const connections = [
+    ["portfolio-coordinator", "experience-agent"],
+    ["portfolio-coordinator", "projects-agent"],
+    ["portfolio-coordinator", "skills-qa-agent"],
+    ["portfolio-coordinator", "eapa-agent"],
+    ["portfolio-coordinator", "contact-agent"],
+  ];
+
+  function initNetwork() {
+    const svgNS = "http://www.w3.org/2000/svg";
+    networkSvg.innerHTML = "";
+
+    // Connections
+    connections.forEach(([fromId, toId]) => {
+      const from = agents.find(a => a.id === fromId);
+      const to = agents.find(a => a.id === toId);
+      if (!from || !to) return;
+      const line = document.createElementNS(svgNS, "line");
+      line.setAttribute("x1", from.x);
+      line.setAttribute("y1", from.y);
+      line.setAttribute("x2", to.x);
+      line.setAttribute("y2", to.y);
+      line.setAttribute("stroke", "#1f1f1f");
+      line.setAttribute("stroke-width", "1.5");
+      line.setAttribute("stroke-dasharray", "4 4");
+      line.classList.add("connection-line");
+      networkSvg.appendChild(line);
+    });
+
+    // Nodes
+    agents.forEach(agent => {
+      const group = document.createElementNS(svgNS, "g");
+      group.classList.add("agent-node");
+      group.setAttribute("data-agent", agent.id);
+
+      const circle = document.createElementNS(svgNS, "circle");
+      circle.setAttribute("cx", agent.x);
+      circle.setAttribute("cy", agent.y);
+      circle.setAttribute("r", "28");
+      circle.setAttribute("fill", agent.color);
+      circle.setAttribute("opacity", "0.15");
+      group.appendChild(circle);
+
+      const innerCircle = document.createElementNS(svgNS, "circle");
+      innerCircle.setAttribute("cx", agent.x);
+      innerCircle.setAttribute("cy", agent.y);
+      innerCircle.setAttribute("r", "20");
+      innerCircle.setAttribute("fill", "#0d0d0d");
+      innerCircle.setAttribute("stroke", agent.color);
+      innerCircle.setAttribute("stroke-width", "2");
+      group.appendChild(innerCircle);
+
+      const emoji = document.createElementNS(svgNS, "text");
+      emoji.setAttribute("x", agent.x);
+      emoji.setAttribute("y", agent.y + 7);
+      emoji.setAttribute("text-anchor", "middle");
+      emoji.setAttribute("font-size", "18");
+      emoji.textContent = agent.emoji;
+      group.appendChild(emoji);
+
+      const label = document.createElementNS(svgNS, "text");
+      label.setAttribute("x", agent.x);
+      label.setAttribute("y", agent.y + 42);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("font-size", "10");
+      label.setAttribute("fill", "#94a3b8");
+      label.textContent = agent.name;
+      group.appendChild(label);
+
+      networkSvg.appendChild(group);
+    });
+
+    // Legend
+    agentLegend.innerHTML = agents.map(a =>
+      `<span class="flex items-center gap-1.5 text-xs text-brand-muted px-2 py-1 rounded-full border border-brand-border/50">
+        <span style="color:${a.color}">${a.emoji}</span> ${a.name}
+      </span>`
+    ).join("");
+  }
+
+  function setActiveAgent(agentId) {
+    document.querySelectorAll(".agent-node").forEach(n => n.classList.remove("active"));
+    const node = document.querySelector(`.agent-node[data-agent="${agentId}"]`);
+    if (node) node.classList.add("active");
+    const agent = agents.find(a => a.id === agentId);
+    if (agent && currentAgentLabel) currentAgentLabel.textContent = agent.name;
+  }
+
+  function clearActiveAgent() {
+    document.querySelectorAll(".agent-node").forEach(n => n.classList.remove("active"));
+    if (currentAgentLabel) currentAgentLabel.textContent = tAgents;
+  }
+
+  function addMessage(content, isUser = false, agentId = null) {
+    const placeholder = chatMessages.querySelector("p");
+    if (placeholder) placeholder.remove();
+
+    const div = document.createElement("div");
+    div.className = `message ${isUser ? "message-user" : "message-agent"} fade-in`;
+    div.innerHTML = isUser
+      ? `<p>${escapeHtml(content)}</p>`
+      : `<div class="flex items-start gap-2">
+           <span class="text-lg">${agentId ? agents.find(a => a.id === agentId)?.emoji || "🤖" : "🤖"}</span>
+           <div class="prose prose-sm max-w-none text-brand-text">${formatMarkdown(content)}</div>
+         </div>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return div;
+  }
+
+  function showThinking() {
+    const div = document.createElement("div");
+    div.className = "message message-agent fade-in";
+    div.id = "thinking-msg";
+    div.innerHTML = `<div class="flex items-start gap-2">
+      <span class="text-lg">🤖</span>
+      <div class="thinking-dots flex gap-1 pt-1"><span></span><span></span><span></span></div>
+    </div>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return div;
+  }
+
+  function removeThinking() {
+    const thinking = document.getElementById("thinking-msg");
+    if (thinking) thinking.remove();
+  }
+
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+  }
+
+  function formatMarkdown(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/`(.*?)`/g, "<code class='bg-brand-bg px-1 rounded'>$1</code>")
+      .replace(/\n/g, "<br>");
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    chatInput.value = "";
+    chatSend.disabled = true;
+    agentStatus.classList.remove("bg-brand-green");
+    agentStatus.classList.add("bg-yellow-500");
+
+    addMessage(text, true);
+    const thinking = showThinking();
+
+    try {
+      const response = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, locale }),
+      });
+
+      const data = await response.json();
+      removeThinking();
+      addMessage(data.response, false, data.agent);
+      setActiveAgent(data.agent);
+      agentStatus.classList.remove("bg-yellow-500");
+      agentStatus.classList.add("bg-brand-green");
+    } catch (e) {
+      removeThinking();
+      addMessage(tError, false);
+      agentStatus.classList.remove("bg-yellow-500");
+      agentStatus.classList.add("bg-red-500");
+    } finally {
+      chatSend.disabled = false;
+      setTimeout(clearActiveAgent, 3000);
+    }
+  }
+
+  chatSend?.addEventListener("click", sendMessage);
+  chatInput?.addEventListener("keydown", e => e.key === "Enter" && sendMessage());
+
+  // Suggested questions
+  suggestedQuestions.forEach(q => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "px-3 py-1.5 text-xs rounded-full border border-brand-border text-brand-muted hover:border-brand-green hover:text-brand-green transition-all";
+    btn.textContent = q;
+    btn.addEventListener("click", () => {
+      chatInput.value = q;
+      sendMessage();
+    });
+    suggestedContainer.appendChild(btn);
+  });
+
+  // Init
+  initNetwork();
+  setTimeout(clearActiveAgent, 100);
+</script>

@@ -12,6 +12,7 @@ export interface UiStrings {
     evidence: string;
     projects: string;
     knowledge: string;
+    agents: string;
     contact: string;
     resume: string;
     menuLabel: string;
@@ -105,6 +106,7 @@ const en: UiStrings = {
     evidence: "Evidence",
     projects: "Projects",
     knowledge: "Knowledge",
+    agents: "Agents",
     contact: "Contact",
     resume: "Resume ↓",
     menuLabel: "Toggle navigation menu",
@@ -214,6 +216,7 @@ const es: UiStrings = {
     evidence: "Evidencia",
     projects: "Proyectos",
     knowledge: "Conocimiento",
+    agents: "Agentes",
     contact: "Contacto",
     resume: "CV ↓",
     menuLabel: "Abrir o cerrar el menú de navegación",
