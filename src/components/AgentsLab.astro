@@ -1,10 +1,9 @@
 ---
 import SectionHeader from './ui/SectionHeader.astro';
-import Tag from './ui/Tag.astro';
 import { defaultLocale, type Locale } from '../i18n/locale';
 import { ui } from '../i18n/ui';
 import { getQaAgents } from '../data/qaAgents';
-import { MAX_MESSAGE_LENGTH, normalizeBaseUrl } from '../features/agents-lab/agentsClient';
+import { LAB_PROVIDERS, MAX_MESSAGE_LENGTH, normalizeBaseUrl } from '../features/agents-lab/agentsClient';
 
 interface Props {
   locale?: Locale;
@@ -15,16 +14,25 @@ const t = ui[locale].agentsLab;
 const agents = getQaAgents(locale);
 const apiBase = normalizeBaseUrl(import.meta.env.PUBLIC_AGENTS_API_URL) ?? '';
 const firstExample = agents[0]?.example ?? '';
+const providerLabels = { GEMINI: 'Gemini', OLLAMA: 'Ollama', OPENROUTER: 'OpenRouter' } as const;
+const providerOptions = [
+  { value: '', label: t.providerAutoShort, title: t.providerAuto },
+  ...LAB_PROVIDERS.map((provider) => ({ value: provider, label: providerLabels[provider], title: providerLabels[provider] })),
+];
+const categoryStyles = {
+  qa: 'border-brand-green/40 text-brand-green',
+  dev: 'border-purple-500/40 text-purple-400',
+};
 ---
 
 <section id="agents" class="py-24 bg-brand-card border-y border-brand-border">
-  <div class="max-w-7xl mx-auto px-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
     <SectionHeader title={t.title} subtitle={t.subtitle} />
 
     <p class="max-w-3xl mx-auto mt-8 text-center text-brand-muted leading-relaxed">{t.intro}</p>
 
     <div class="mt-6 flex justify-center">
-      <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-full border border-brand-border text-brand-muted">
+      <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-full border border-brand-border bg-brand-bg text-brand-muted">
         <span id="agents-lab-status-dot" class="w-2 h-2 rounded-full bg-brand-muted" aria-hidden="true"></span>
         <span id="agents-lab-status" role="status">{t.status.checking}</span>
       </span>
@@ -32,11 +40,17 @@ const firstExample = agents[0]?.example ?? '';
 
     <div
       id="agents-lab"
-      class="mt-12 grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-8"
+      class="mt-12 grid lg:grid-cols-[16rem_minmax(0,1fr)] gap-6"
       data-locale={locale}
       data-api-base={apiBase}
     >
-      <div id="agents-lab-picker" role="radiogroup" aria-label={t.title} class="grid grid-cols-2 gap-3 content-start">
+      <!-- Agent picker: horizontal chips on mobile, vertical list on desktop -->
+      <div
+        id="agents-lab-picker"
+        role="radiogroup"
+        aria-label={t.agentList}
+        class="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible snap-x snap-mandatory -mx-4 px-4 pb-2 lg:mx-0 lg:px-0 lg:pb-0 [scrollbar-width:thin]"
+      >
         {agents.map((agent, index) => (
           <button
             type="button"
@@ -44,137 +58,239 @@ const firstExample = agents[0]?.example ?? '';
             aria-checked={index === 0 ? 'true' : 'false'}
             tabindex={index === 0 ? 0 : -1}
             data-agent-id={agent.id}
-            class="agent-option text-left p-4 rounded-xl border border-brand-border bg-brand-bg transition-colors hover:border-brand-green/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green aria-checked:border-brand-green aria-checked:bg-brand-green/5"
+            class="agent-option group shrink-0 snap-start flex items-center gap-3 rounded-xl border border-brand-border bg-brand-bg px-3 py-2.5 text-left transition-colors hover:border-brand-green/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green aria-checked:border-brand-green aria-checked:bg-brand-green/10"
           >
-            <span class="flex items-start justify-between gap-2">
-              <span class="text-2xl" aria-hidden="true">{agent.icon}</span>
-              <span
-                class:list={[
-                  'px-2 py-0.5 text-[10px] font-semibold uppercase rounded border',
-                  agent.category === 'dev'
-                    ? 'border-purple-500/40 text-purple-400'
-                    : 'border-brand-green/40 text-brand-green',
-                ]}
-              >
-                {t.categories[agent.category]}
-              </span>
+            <span class="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-brand-card text-lg" aria-hidden="true">{agent.icon}</span>
+            <span class="text-sm font-medium leading-tight text-brand-text whitespace-nowrap lg:whitespace-normal">{agent.name}</span>
+            <span class:list={['ml-auto px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded border', categoryStyles[agent.category]]}>
+              {t.categories[agent.category]}
             </span>
-            <span class="block mt-3 text-sm font-semibold leading-snug text-brand-text">{agent.name}</span>
           </button>
         ))}
       </div>
 
-      <div class="min-w-0 rounded-xl border border-brand-border bg-brand-bg p-6">
-        {agents.map((agent, index) => (
-          <div class:list={['agent-details', { hidden: index !== 0 }]} data-agent-id={agent.id} data-example={agent.example}>
-            <h3 class="flex items-center gap-2 text-xl font-semibold text-brand-text">
-              <span aria-hidden="true">{agent.icon}</span>
-              {agent.name}
-            </h3>
-            <p class="mt-2 text-sm leading-relaxed text-brand-muted">{agent.summary}</p>
-
-            <div class="mt-5 grid sm:grid-cols-2 gap-5">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-brand-muted">{t.techniques}</p>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  {agent.techniques.map((technique) => <Tag label={technique} />)}
+      <!-- Console -->
+      <div class="min-w-0 rounded-2xl border border-brand-border bg-brand-bg overflow-hidden">
+        <div class="p-5 sm:p-6 border-b border-brand-border">
+          {agents.map((agent, index) => (
+            <div class:list={['agent-details', { hidden: index !== 0 }]} data-agent-id={agent.id} data-example={agent.example}>
+              <div class="flex items-start gap-4">
+                <span class="grid place-items-center w-12 h-12 shrink-0 rounded-xl bg-brand-card border border-brand-border text-2xl" aria-hidden="true">
+                  {agent.icon}
+                </span>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="text-lg sm:text-xl font-semibold text-brand-text">{agent.name}</h3>
+                    <span class:list={['px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded border', categoryStyles[agent.category]]}>
+                      {t.categories[agent.category]}
+                    </span>
+                  </div>
+                  <p class="mt-1 text-sm leading-relaxed text-brand-muted">{agent.summary}</p>
                 </div>
               </div>
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-brand-muted">{t.evidence}</p>
-                <ul class="mt-2 space-y-2">
-                  {agent.evidence.map((item) => (
-                    <li class="flex items-start gap-2 text-sm">
-                      <span class="shrink-0 px-1.5 py-0.5 text-[10px] font-semibold border border-brand-green/40 text-brand-green">
-                        {item.maturity}
-                      </span>
+
+              <dl class="mt-5 grid sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt class="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">{t.techniques}</dt>
+                  <dd class="mt-2 flex flex-wrap gap-1.5">
+                    {agent.techniques.map((technique) => (
+                      <span class="px-2 py-0.5 text-xs rounded-md bg-brand-card border border-brand-border text-brand-text/80">{technique}</span>
+                    ))}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">{t.evidence}</dt>
+                  <dd class="mt-2 space-y-1.5">
+                    {agent.evidence.map((item) => (
                       <a
                         href={item.href}
-                        class="text-brand-muted hover:text-brand-green transition-colors"
+                        class="flex items-start gap-2 text-brand-muted hover:text-brand-green transition-colors"
                         {...(item.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       >
-                        {item.label}{item.href.startsWith('http') && ' ↗'}
+                        <span class="shrink-0 mt-px px-1.5 text-[10px] font-semibold leading-4 rounded border border-brand-green/40 text-brand-green">
+                          {item.maturity}
+                        </span>
+                        <span>{item.label}{item.href.startsWith('http') && ' ↗'}</span>
                       </a>
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          ))}
+        </div>
+
+        <form id="agents-lab-form" class="p-5 sm:p-6 space-y-4" novalidate>
+          <div>
+            <div class="flex items-center justify-between gap-3">
+              <label for="agents-lab-input" class="text-sm font-semibold text-brand-text">{t.inputLabel}</label>
+              <button
+                id="agents-lab-example"
+                type="button"
+                class="text-xs text-brand-muted underline-offset-4 hover:text-brand-green hover:underline transition-colors"
+              >
+                {t.useExample}
+              </button>
+            </div>
+            <div class="mt-2 rounded-xl border border-brand-border bg-brand-card focus-within:border-brand-green transition-colors">
+              <textarea
+                id="agents-lab-input"
+                rows="7"
+                maxlength={MAX_MESSAGE_LENGTH}
+                placeholder={t.placeholder}
+                aria-describedby="agents-lab-input-hint"
+                class="block w-full resize-y rounded-t-xl bg-transparent p-4 font-mono text-[13px] leading-relaxed text-brand-text placeholder:text-brand-muted focus:outline-none"
+              >{firstExample}</textarea>
+              <div id="agents-lab-input-hint" class="flex items-center justify-between gap-3 px-4 py-2 border-t border-brand-border text-[11px] text-brand-muted">
+                <span><span id="agents-lab-count">0</span> / {MAX_MESSAGE_LENGTH.toLocaleString(locale)} {t.characters}</span>
+                <span class="hidden sm:inline">{t.shortcut}</span>
               </div>
             </div>
           </div>
-        ))}
 
-        <form id="agents-lab-form" class="mt-6 space-y-3" novalidate>
-          <label for="agents-lab-input" class="block text-sm font-semibold text-brand-text">{t.inputLabel}</label>
-          <textarea
-            id="agents-lab-input"
-            rows="8"
-            maxlength={MAX_MESSAGE_LENGTH}
-            placeholder={t.placeholder}
-            class="w-full p-4 font-mono text-sm leading-relaxed bg-brand-card border border-brand-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-green"
-          >{firstExample}</textarea>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <fieldset class="min-w-0">
+              <legend class="sr-only">{t.providerLabel}</legend>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                <span class="text-xs text-brand-muted shrink-0" aria-hidden="true">{t.providerLabel}</span>
+                <div class="flex w-fit gap-1 rounded-lg border border-brand-border bg-brand-card p-1">
+                  {providerOptions.map((option, index) => (
+                    <label class="relative" title={option.title}>
+                      <input
+                        type="radio"
+                        name="agents-lab-provider"
+                        value={option.value}
+                        checked={index === 0}
+                        class="peer sr-only"
+                      />
+                      <span class="block cursor-pointer rounded-md px-2.5 py-1 text-xs text-brand-muted transition-colors hover:text-brand-text peer-checked:bg-brand-green/15 peer-checked:text-brand-green peer-focus-visible:ring-2 peer-focus-visible:ring-brand-green">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </fieldset>
 
-          <div class="flex flex-wrap items-center gap-3">
             <button
               id="agents-lab-run"
               type="submit"
-              class="h-11 px-5 bg-brand-green text-brand-bg font-semibold hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="sm:ml-auto h-11 px-6 rounded-lg bg-brand-green text-brand-bg font-semibold hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              <span id="agents-lab-run-label">{t.run}</span> <span aria-hidden="true">→</span>
+              <span id="agents-lab-run-label">{t.run}</span>
+              <span aria-hidden="true">→</span>
             </button>
-            <button
-              id="agents-lab-example"
-              type="button"
-              class="h-11 px-4 text-sm border border-brand-border text-brand-muted hover:text-brand-green hover:border-brand-green/50 transition-colors"
-            >
-              {t.useExample}
-            </button>
-            <label class="sm:ml-auto flex items-center gap-2 text-xs text-brand-muted">
-              {t.providerLabel}
-              <select
-                id="agents-lab-provider"
-                class="h-9 px-2 bg-brand-card border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
-              >
-                <option value="">{t.providerAuto}</option>
-                <option value="GEMINI">Gemini</option>
-                <option value="OLLAMA">Ollama</option>
-                <option value="OPENROUTER">OpenRouter</option>
-              </select>
-            </label>
           </div>
         </form>
 
-        <div class="mt-6 pt-5 border-t border-brand-border" aria-live="polite" aria-busy="false" id="agents-lab-result">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h4 class="text-sm font-semibold text-brand-text">{t.outputTitle}</h4>
-            <span id="agents-lab-meta" class="text-xs text-brand-muted"></span>
+        <div id="agents-lab-result" class="border-t border-brand-border p-5 sm:p-6" aria-live="polite" aria-busy="false">
+          <div class="flex flex-wrap items-center gap-2">
+            <h4 class="text-sm font-semibold text-brand-text mr-auto">{t.outputTitle}</h4>
+            <span id="agents-lab-meta" class="hidden items-center gap-1.5 text-xs text-brand-muted">
+              <span>{t.servedBy}</span>
+              <span id="agents-lab-meta-provider" class="px-1.5 py-0.5 rounded border border-brand-border text-brand-text"></span>
+              <span id="agents-lab-meta-fallback" class="hidden px-1.5 py-0.5 rounded border border-yellow-500/40 text-yellow-400">{t.fallback}</span>
+              <span id="agents-lab-meta-latency"></span>
+            </span>
+            <button
+              id="agents-lab-copy"
+              type="button"
+              class="hidden px-2.5 py-1 text-xs rounded-md border border-brand-border text-brand-muted hover:text-brand-green hover:border-brand-green/50 transition-colors"
+            >
+              {t.copy}
+            </button>
           </div>
-          <!-- The answer is inserted with textContent, never innerHTML: LLM output is untrusted (XSS). -->
-          <div
-            id="agents-lab-output"
-            class="mt-3 max-h-[32rem] overflow-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-brand-muted"
-          >{t.emptyOutput}</div>
+
+          <p id="agents-lab-empty" class="mt-4 text-sm text-brand-muted">{t.emptyOutput}</p>
+
+          <div id="agents-lab-loading" class="hidden mt-4" role="status">
+            <div class="flex items-center gap-3 text-sm text-brand-muted">
+              <span class="flex gap-1" aria-hidden="true">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-green animate-bounce [animation-delay:-0.3s]"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-green animate-bounce [animation-delay:-0.15s]"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-green animate-bounce"></span>
+              </span>
+              <span>{t.running} <span id="agents-lab-elapsed" class="tabular-nums">0.0</span> s</span>
+            </div>
+            <p id="agents-lab-slow" class="hidden mt-2 text-xs text-yellow-400/90">{t.slowHint}</p>
+            <div class="mt-4 space-y-2" aria-hidden="true">
+              <div class="h-3 w-3/4 rounded bg-white/[0.06] animate-pulse"></div>
+              <div class="h-3 w-full rounded bg-white/[0.06] animate-pulse"></div>
+              <div class="h-3 w-5/6 rounded bg-white/[0.06] animate-pulse"></div>
+            </div>
+          </div>
+
+          <div id="agents-lab-error" class="hidden mt-4 rounded-xl border border-brand-red/40 bg-brand-red/10 p-4" role="alert">
+            <p id="agents-lab-error-text" class="text-sm text-brand-text"></p>
+            <button
+              id="agents-lab-retry"
+              type="button"
+              class="mt-3 px-3 py-1.5 text-xs rounded-md border border-brand-border text-brand-text hover:border-brand-green/50 hover:text-brand-green transition-colors"
+            >
+              {t.retry}
+            </button>
+          </div>
+
+          <!-- Agent answers are Markdown from an LLM: rendered through renderMarkdown (escaped + DOMPurify) -->
+          <div id="agents-lab-output" class="agent-md hidden mt-4 max-h-[36rem] overflow-auto pr-1"></div>
         </div>
 
-        <p class="mt-6 pl-3 border-l-2 border-brand-border text-xs leading-relaxed text-brand-muted">{t.disclaimer}</p>
+        <p class="px-5 sm:px-6 pb-5 sm:pb-6 text-[11px] leading-relaxed text-brand-muted">{t.disclaimer}</p>
       </div>
     </div>
   </div>
 </section>
 
+<style is:global>
+  /* Typography for rendered agent answers (inserted at runtime, so the styles are global) */
+  .agent-md { color: #e2e8f0; font-size: 0.9rem; line-height: 1.7; overflow-wrap: anywhere; }
+  .agent-md > :first-child { margin-top: 0; }
+  .agent-md h1, .agent-md h2, .agent-md h3, .agent-md h4 { color: #f1f5f9; font-weight: 600; line-height: 1.3; margin: 1.4em 0 0.6em; }
+  .agent-md h1 { font-size: 1.25rem; }
+  .agent-md h2 { font-size: 1.1rem; }
+  .agent-md h3, .agent-md h4 { font-size: 1rem; }
+  .agent-md p, .agent-md ul, .agent-md ol, .agent-md blockquote, .agent-md pre { margin: 0.7em 0; }
+  .agent-md ul { list-style: disc; padding-left: 1.4em; }
+  .agent-md ol { list-style: decimal; padding-left: 1.4em; }
+  .agent-md li { margin: 0.25em 0; }
+  .agent-md li::marker { color: #22c55e; }
+  .agent-md strong { color: #f8fafc; font-weight: 600; }
+  .agent-md a { color: #22c55e; text-decoration: underline; text-underline-offset: 3px; }
+  /* Links whose unsafe href was removed by DOMPurify render as plain text */
+  .agent-md a:not([href]) { color: inherit; text-decoration: none; }
+  .agent-md blockquote { border-left: 2px solid #22c55e; padding-left: 1em; color: #94a3b8; }
+  .agent-md hr { border: 0; border-top: 1px solid #1f1f1f; margin: 1.4em 0; }
+  .agent-md code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85em; background: #161616; border: 1px solid #1f1f1f; border-radius: 4px; padding: 0.1em 0.35em; }
+  .agent-md pre { background: #161616; border: 1px solid #1f1f1f; border-radius: 10px; padding: 0.9em 1em; overflow-x: auto; }
+  .agent-md pre code { background: none; border: 0; padding: 0; font-size: 0.82rem; }
+  .agent-md table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0.9em 0; font-size: 0.82rem; }
+  /* The table scrolls sideways, so cells keep whole words instead of breaking letter by letter */
+  .agent-md table { overflow-wrap: normal; }
+  .agent-md th, .agent-md td { border: 1px solid #1f1f1f; padding: 0.45em 0.7em; text-align: left; vertical-align: top; min-width: 7rem; }
+  .agent-md th:first-child, .agent-md td:first-child { min-width: 0; white-space: nowrap; }
+  .agent-md th { background: #161616; color: #f1f5f9; font-weight: 600; white-space: nowrap; }
+  .agent-md tr:nth-child(even) td { background: rgba(255, 255, 255, 0.015); }
+</style>
+
 <script>
   import {
-    waitForBackend,
     isLabProvider,
     normalizeBaseUrl,
     runAgent,
+    waitForBackend,
     type AgentRunError,
     type AgentRunResult,
     type BackendHealth,
     type LabProvider,
   } from '../features/agents-lab/agentsClient';
+  import { renderMarkdown } from '../features/agents-lab/renderMarkdown';
   import { ui, type UiStrings } from '../i18n/ui';
 
   type LabStrings = UiStrings['agentsLab'];
+  type LabStatus = BackendHealth | 'checking' | 'waking';
+  type View = 'empty' | 'loading' | 'error' | 'answer';
+
+  const SLOW_HINT_AFTER_MS = 20_000;
 
   const errorKeys: Record<AgentRunError, keyof LabStrings['errors']> = {
     'not-configured': 'notConfigured',
@@ -185,8 +301,6 @@ const firstExample = agents[0]?.example ?? '';
     network: 'network',
     unexpected: 'unexpected',
   };
-
-  type LabStatus = BackendHealth | 'checking' | 'waking';
 
   const statusStyles: Record<LabStatus, { key: keyof LabStrings['status']; dot: string }> = {
     checking: { key: 'checking', dot: 'bg-brand-muted' },
@@ -203,46 +317,78 @@ const firstExample = agents[0]?.example ?? '';
     const locale = root.dataset.locale === 'es' ? 'es' : 'en';
     const t = ui[locale].agentsLab;
     const baseUrl = normalizeBaseUrl(root.dataset.apiBase);
+    const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
 
     const options = [...root.querySelectorAll<HTMLButtonElement>('.agent-option')];
     const details = [...root.querySelectorAll<HTMLElement>('.agent-details')];
-    const picker = root.querySelector<HTMLElement>('#agents-lab-picker');
-    const form = root.querySelector<HTMLFormElement>('#agents-lab-form');
-    const input = root.querySelector<HTMLTextAreaElement>('#agents-lab-input');
-    const runButton = root.querySelector<HTMLButtonElement>('#agents-lab-run');
-    const runLabel = root.querySelector<HTMLElement>('#agents-lab-run-label');
-    const exampleButton = root.querySelector<HTMLButtonElement>('#agents-lab-example');
-    const providerSelect = root.querySelector<HTMLSelectElement>('#agents-lab-provider');
-    const result = root.querySelector<HTMLElement>('#agents-lab-result');
-    const output = root.querySelector<HTMLElement>('#agents-lab-output');
-    const meta = root.querySelector<HTMLElement>('#agents-lab-meta');
+    const picker = $('#agents-lab-picker');
+    const form = $<HTMLFormElement>('#agents-lab-form');
+    const input = $<HTMLTextAreaElement>('#agents-lab-input');
+    const count = $('#agents-lab-count');
+    const runButton = $<HTMLButtonElement>('#agents-lab-run');
+    const runLabel = $('#agents-lab-run-label');
+    const exampleButton = $<HTMLButtonElement>('#agents-lab-example');
+    const result = $('#agents-lab-result');
+    const views: Record<View, HTMLElement | null> = {
+      empty: $('#agents-lab-empty'),
+      loading: $('#agents-lab-loading'),
+      error: $('#agents-lab-error'),
+      answer: $('#agents-lab-output'),
+    };
+    const elapsed = $('#agents-lab-elapsed');
+    const slowHint = $('#agents-lab-slow');
+    const errorText = $('#agents-lab-error-text');
+    const retryButton = $<HTMLButtonElement>('#agents-lab-retry');
+    const meta = $('#agents-lab-meta');
+    const metaProvider = $('#agents-lab-meta-provider');
+    const metaFallback = $('#agents-lab-meta-fallback');
+    const metaLatency = $('#agents-lab-meta-latency');
+    const copyButton = $<HTMLButtonElement>('#agents-lab-copy');
     const statusText = document.querySelector<HTMLElement>('#agents-lab-status');
     const statusDot = document.querySelector<HTMLElement>('#agents-lab-status-dot');
-    if (!form || !input || !runButton || !output || !meta) return;
+    if (!form || !input || !runButton || !views.answer) return;
 
     let selected = options[0]?.dataset.agentId ?? '';
+    let lastAnswer = '';
     // Ignores answers that arrive after the visitor switched agents or ran again
     let runId = 0;
+    let timer: number | undefined;
 
     const exampleFor = (id: string) => details.find((item) => item.dataset.agentId === id)?.dataset.example ?? '';
 
-    function showOutput(text: string, tone: 'muted' | 'answer' | 'error') {
-      output!.textContent = text;
-      output!.classList.toggle('text-brand-muted', tone === 'muted');
-      output!.classList.toggle('text-brand-text', tone === 'answer');
-      output!.classList.toggle('text-brand-red', tone === 'error');
+    function show(view: View) {
+      (Object.keys(views) as View[]).forEach((name) => views[name]?.classList.toggle('hidden', name !== view));
+      const answered = view === 'answer';
+      meta?.classList.toggle('hidden', !answered);
+      meta?.classList.toggle('inline-flex', answered);
+      copyButton?.classList.toggle('hidden', !answered);
+      result?.setAttribute('aria-busy', String(view === 'loading'));
+    }
+
+    function stopTimer() {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
     }
 
     function setBusy(busy: boolean) {
       runButton!.disabled = busy || baseUrl === null;
       if (runLabel) runLabel.textContent = busy ? t.running : t.run;
-      result?.setAttribute('aria-busy', String(busy));
     }
 
-    function resetOutput() {
-      meta!.textContent = '';
-      if (baseUrl === null) showOutput(t.errors.notConfigured, 'muted');
-      else showOutput(t.emptyOutput, 'muted');
+    function updateCount() {
+      if (count) count.textContent = input!.value.length.toLocaleString(locale);
+    }
+
+    function showEmpty() {
+      stopTimer();
+      if (baseUrl === null && views.empty) views.empty.textContent = t.errors.notConfigured;
+      show('empty');
+    }
+
+    function showError(message: string) {
+      stopTimer();
+      if (errorText) errorText.textContent = message;
+      show('error');
     }
 
     function select(id: string, focus = false) {
@@ -254,32 +400,49 @@ const firstExample = agents[0]?.example ?? '';
         const active = option.dataset.agentId === id;
         option.setAttribute('aria-checked', String(active));
         option.tabIndex = active ? 0 : -1;
-        if (active && focus) option.focus();
+        if (active) {
+          if (focus) option.focus();
+          option.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        }
       });
       details.forEach((item) => item.classList.toggle('hidden', item.dataset.agentId !== id));
       // Keep what the visitor wrote; only swap the text when it is still a sample
       if (!input!.value.trim() || input!.value === previousExample) input!.value = exampleFor(id);
-      resetOutput();
+      updateCount();
+      showEmpty();
     }
 
     function describe(outcome: AgentRunResult) {
+      stopTimer();
       if (outcome.status === 'ok') {
-        const fallback = outcome.fallback ? ` (${t.fallback})` : '';
-        meta!.textContent = `${t.servedBy}: ${providerNames[outcome.provider]}${fallback} · ${(outcome.latencyMs / 1000).toFixed(1)} s`;
-        showOutput(outcome.response, 'answer');
+        lastAnswer = outcome.response;
+        views.answer!.innerHTML = renderMarkdown(outcome.response);
+        if (metaProvider) metaProvider.textContent = providerNames[outcome.provider];
+        metaFallback?.classList.toggle('hidden', !outcome.fallback);
+        if (metaLatency) metaLatency.textContent = `· ${(outcome.latencyMs / 1000).toFixed(1)} s`;
+        show('answer');
         return;
       }
-      meta!.textContent = '';
       const message = t.errors[errorKeys[outcome.error]];
-      showOutput(outcome.detail && outcome.error === 'invalid-input' ? `${message}\n${outcome.detail}` : message, 'error');
+      showError(outcome.detail && outcome.error === 'invalid-input' ? `${message} ${outcome.detail}` : message);
     }
 
     async function run() {
       const currentRun = ++runId;
       setBusy(true);
-      meta!.textContent = '';
-      showOutput(t.running, 'muted');
-      const provider = providerSelect && isLabProvider(providerSelect.value) ? providerSelect.value : undefined;
+      show('loading');
+      slowHint?.classList.add('hidden');
+      if (elapsed) elapsed.textContent = '0.0';
+      const started = performance.now();
+      stopTimer();
+      timer = window.setInterval(() => {
+        const ms = performance.now() - started;
+        if (elapsed) elapsed.textContent = (ms / 1000).toFixed(1);
+        if (ms > SLOW_HINT_AFTER_MS) slowHint?.classList.remove('hidden');
+      }, 100);
+
+      const checked = root.querySelector<HTMLInputElement>('input[name="agents-lab-provider"]:checked');
+      const provider = checked && isLabProvider(checked.value) ? checked.value : undefined;
       const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider });
       if (currentRun !== runId) return;
       describe(outcome);
@@ -300,12 +463,33 @@ const firstExample = agents[0]?.example ?? '';
 
     exampleButton?.addEventListener('click', () => {
       input.value = exampleFor(selected);
+      updateCount();
       input.focus();
+    });
+
+    input.addEventListener('input', updateCount);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !runButton.disabled) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
     });
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       void run();
+    });
+
+    retryButton?.addEventListener('click', () => void run());
+
+    copyButton?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(lastAnswer);
+        copyButton.textContent = t.copied;
+        window.setTimeout(() => (copyButton.textContent = t.copy), 2000);
+      } catch {
+        // Clipboard can be blocked (permissions, insecure context): the text stays selectable
+      }
     });
 
     function setStatus(state: LabStatus) {
@@ -314,8 +498,9 @@ const firstExample = agents[0]?.example ?? '';
       if (statusDot) statusDot.className = `w-2 h-2 rounded-full ${style.dot}`;
     }
 
-    resetOutput();
+    updateCount();
     setBusy(false);
+    showEmpty();
     setStatus(baseUrl === null ? 'not-configured' : 'checking');
     if (baseUrl !== null) {
       // A sleeping backend answers slowly: say so instead of looking broken

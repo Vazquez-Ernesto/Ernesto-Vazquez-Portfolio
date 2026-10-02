@@ -97,6 +97,14 @@ export interface UiStrings {
     useExample: string;
     providerLabel: string;
     providerAuto: string;
+    providerAutoShort: string;
+    agentList: string;
+    shortcut: string;
+    characters: string;
+    copy: string;
+    copied: string;
+    retry: string;
+    slowHint: string;
     outputTitle: string;
     emptyOutput: string;
     servedBy: string;
@@ -244,6 +252,14 @@ const en: UiStrings = {
     useExample: "Use sample input",
     providerLabel: "Preferred model",
     providerAuto: "Auto (Gemini → Ollama → OpenRouter)",
+    providerAutoShort: "Auto",
+    agentList: "QA agents",
+    shortcut: "Ctrl + Enter to run",
+    characters: "characters",
+    copy: "Copy",
+    copied: "Copied",
+    retry: "Try again",
+    slowHint: "The first model is slow or unavailable, trying the next one…",
     outputTitle: "Agent output",
     emptyOutput: "The answer will appear here.",
     servedBy: "Answered by",
@@ -391,6 +407,14 @@ const es: UiStrings = {
     useExample: "Usar ejemplo",
     providerLabel: "Modelo preferido",
     providerAuto: "Auto (Gemini → Ollama → OpenRouter)",
+    providerAutoShort: "Auto",
+    agentList: "Agentes de QA",
+    shortcut: "Ctrl + Enter para ejecutar",
+    characters: "caracteres",
+    copy: "Copiar",
+    copied: "Copiado",
+    retry: "Reintentar",
+    slowHint: "El primer modelo está lento o no disponible, probando con el siguiente…",
     outputTitle: "Respuesta del agente",
     emptyOutput: "La respuesta va a aparecer acá.",
     servedBy: "Respondió",
