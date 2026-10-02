@@ -3,6 +3,7 @@ import { QA_AGENT_IDS, getQaAgents, qaAgentCatalog } from '../src/data/qaAgents'
 import {
   MAX_MESSAGE_LENGTH,
   checkHealth,
+  fetchAvailableAgents,
   isLabProvider,
   waitForBackend,
   normalizeBaseUrl,
@@ -26,10 +27,10 @@ function fakeFetch(status: number, body: unknown, headers: Record<string, string
 const request = { agentId: 'bug-report-analyst', message: 'Login fails', locale: 'en' as const };
 
 describe('QA Agents Lab catalog', () => {
-  it('has 11 agents in the same order as the backend', () => {
+  it('has 12 agents in the same order as the backend', () => {
     // Same list as LAB_AGENT_IDS in ernesto-agents SkillLoaderTest
     expect(qaAgentCatalog.map((agent) => agent.id)).toEqual([...QA_AGENT_IDS]);
-    expect(QA_AGENT_IDS).toHaveLength(11);
+    expect(QA_AGENT_IDS).toHaveLength(12);
   });
 
   it('starts with the About Ernesto agent, with localized topics', () => {
@@ -38,6 +39,14 @@ describe('QA Agents Lab catalog', () => {
     expect(about?.category).toBe('about');
     expect(getQaAgents('es')[0]?.techniques).toContain('Años de experiencia');
     expect(getQaAgents('en')[0]?.techniques).toContain('Years of experience');
+  });
+
+  it('ends with the Prompt Optimizer, the only AI agent', () => {
+    expect(qaAgentCatalog.filter((agent) => agent.category === 'ai').map((agent) => agent.id)).toEqual([
+      'prompt-optimizer',
+    ]);
+    expect(qaAgentCatalog.at(-1)?.id).toBe('prompt-optimizer');
+    expect(getQaAgents('es').at(-1)?.techniques).toContain('Formato de salida');
   });
 
   it('has nine QA agents and one development agent', () => {
@@ -276,5 +285,28 @@ describe('agent context for the backend', () => {
       expect(role.endDate === null || /^\d{4}-\d{2}$/.test(role.endDate), role.company).toBe(true);
     }
     expect(roles.filter((role) => role.endDate === null)).toHaveLength(1);
+  });
+});
+
+describe('fetchAvailableAgents', () => {
+  it('returns the ids the backend serves', async () => {
+    const { impl, calls } = fakeFetch(200, [{ id: 'about-ernesto' }, { id: 'test-case-designer' }]);
+    const ids = await fetchAvailableAgents(BASE, impl);
+    expect(ids).toEqual(new Set(['about-ernesto', 'test-case-designer']));
+    expect(calls[0]?.url).toBe(`${BASE}/api/agents`);
+  });
+
+  it.each([
+    ['not configured', null, fakeFetch(200, []).impl],
+    ['HTTP error', BASE, fakeFetch(503, {}).impl],
+    ['not a list', BASE, fakeFetch(200, { agents: [] }).impl],
+    ['network error', BASE, async () => Promise.reject(new TypeError('Failed to fetch'))],
+  ])('returns null (restrict nothing) when %s', async (_, base, impl) => {
+    expect(await fetchAvailableAgents(base, impl)).toBeNull();
+  });
+
+  it('ignores malformed entries', async () => {
+    const { impl } = fakeFetch(200, [{ id: 'ok' }, { id: 7 }, null, 'x']);
+    expect(await fetchAvailableAgents(BASE, impl)).toEqual(new Set(['ok']));
   });
 });

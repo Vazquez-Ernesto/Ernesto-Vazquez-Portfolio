@@ -165,6 +165,31 @@ export async function checkHealth(baseUrl: string | null, fetchImpl: FetchLike =
   }
 }
 
+/**
+ * Agent ids the backend serves right now, or null when they cannot be read (then nothing is
+ * restricted). Lets the UI grey out an agent whose backend deploy has not finished yet,
+ * instead of showing "that agent does not exist" (the frontend deploys in seconds, the backend in minutes).
+ */
+export async function fetchAvailableAgents(
+  baseUrl: string | null,
+  fetchImpl: FetchLike = fetch,
+): Promise<Set<string> | null> {
+  if (!baseUrl) return null;
+  try {
+    const response = await fetchImpl(`${baseUrl}/api/agents`, { signal: timeoutSignal(HEALTH_TIMEOUT_MS) });
+    if (!response.ok) return null;
+    const body: unknown = await response.json();
+    if (!Array.isArray(body)) return null;
+    return new Set(
+      body
+        .map((agent) => (agent as { id?: unknown } | null)?.id)
+        .filter((id): id is string => typeof id === "string"),
+    );
+  } catch {
+    return null;
+  }
+}
+
 export interface WakeOptions {
   /** Health checks to try before giving up (default 24, ~2-3 minutes with the default delay). */
   attempts?: number;

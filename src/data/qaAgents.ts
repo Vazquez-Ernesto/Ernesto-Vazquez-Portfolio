@@ -21,10 +21,11 @@ export const QA_AGENT_IDS = [
   "ci-quality-gates",
   "exploratory-testing-coach",
   "code-review-dev",
+  "prompt-optimizer",
 ] as const;
 
 export type QaAgentId = (typeof QA_AGENT_IDS)[number];
-export type QaAgentCategory = "about" | "qa" | "dev";
+export type QaAgentCategory = "about" | "qa" | "dev" | "ai";
 export type QaAgentMaturity = "H1" | "H2";
 
 type LocalText = Record<Locale, string>;
@@ -278,6 +279,29 @@ export const qaAgentCatalog: QaAgentEntry[] = [
     evidence: [
       repo("This portfolio (Astro + TypeScript + Vitest)", "Este portfolio (Astro + TypeScript + Vitest)", REPO.portfolio),
       repo("React Knowledge Blog", "Blog de conocimiento en React", REPO.reactBlog),
+    ],
+  },
+  {
+    id: "prompt-optimizer",
+    icon: "✨",
+    category: "ai",
+    name: { en: "Prompt Optimizer", es: "Optimizador de Prompts" },
+    summary: {
+      en: "Paste any prompt or message and get a clearer, more effective version, ready to copy, with every change explained.",
+      es: "Pegá cualquier prompt o mensaje y recibí una versión más clara y efectiva, lista para copiar, con cada cambio explicado.",
+    },
+    techniques: [],
+    topics: {
+      en: ["Clear goal", "Context", "Role and audience", "Output format", "Few-shot examples", "Placeholders"],
+      es: ["Objetivo claro", "Contexto", "Rol y audiencia", "Formato de salida", "Ejemplos (few-shot)", "Placeholders"],
+    },
+    example: {
+      en: "write test cases for the login of my app",
+      es: "haceme casos de prueba para el login de mi app",
+    },
+    evidence: [
+      job("CFOTech — internal training on AI tools for testing", "CFOTech — capacitación interna en herramientas de IA para testing"),
+      { label: { en: "AI in QA: prompt engineering", es: "IA en QA: prompt engineering" }, maturity: "H1", href: "#skills" },
     ],
   },
 ];

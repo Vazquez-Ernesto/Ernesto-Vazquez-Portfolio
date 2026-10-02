@@ -23,6 +23,7 @@ const categoryStyles = {
   about: 'border-sky-500/40 text-sky-400',
   qa: 'border-brand-green/40 text-brand-green',
   dev: 'border-purple-500/40 text-purple-400',
+  ai: 'border-amber-500/40 text-amber-400',
 };
 ---
 
@@ -275,6 +276,7 @@ const categoryStyles = {
 
 <script>
   import {
+    fetchAvailableAgents,
     isLabProvider,
     normalizeBaseUrl,
     runAgent,
@@ -352,6 +354,9 @@ const categoryStyles = {
 
     let selected = options[0]?.dataset.agentId ?? '';
     let lastAnswer = '';
+    let currentView: View = 'empty';
+    // Agents the frontend lists but the backend does not serve yet (a deploy in progress)
+    const unavailable = new Set<string>();
     // Ignores answers that arrive after the visitor switched agents or ran again
     let runId = 0;
     let timer: number | undefined;
@@ -359,6 +364,7 @@ const categoryStyles = {
     const exampleFor = (id: string) => details.find((item) => item.dataset.agentId === id)?.dataset.example ?? '';
 
     function show(view: View) {
+      currentView = view;
       (Object.keys(views) as View[]).forEach((name) => views[name]?.classList.toggle('hidden', name !== view));
       const answered = view === 'answer';
       meta?.classList.toggle('hidden', !answered);
@@ -373,7 +379,7 @@ const categoryStyles = {
     }
 
     function setBusy(busy: boolean) {
-      runButton!.disabled = busy || baseUrl === null;
+      runButton!.disabled = busy || baseUrl === null || unavailable.has(selected);
       if (runLabel) runLabel.textContent = busy ? t.running : t.run;
     }
 
@@ -383,7 +389,10 @@ const categoryStyles = {
 
     function showEmpty() {
       stopTimer();
-      if (baseUrl === null && views.empty) views.empty.textContent = t.errors.notConfigured;
+      if (views.empty) {
+        views.empty.textContent =
+          baseUrl === null ? t.errors.notConfigured : unavailable.has(selected) ? t.unavailable : t.emptyOutput;
+      }
       show('empty');
     }
 
@@ -511,9 +520,21 @@ const categoryStyles = {
         window.clearTimeout(wakingTimer);
         setStatus('waking');
       };
-      void waitForBackend(baseUrl, fetch, { onRetry: wake }).then((state) => {
+      void waitForBackend(baseUrl, fetch, { onRetry: wake }).then(async (state) => {
         window.clearTimeout(wakingTimer);
         setStatus(state);
+        if (state !== 'online' && state !== 'degraded') return;
+        const served = await fetchAvailableAgents(baseUrl);
+        if (!served) return;
+        options.forEach((option) => {
+          const id = option.dataset.agentId ?? '';
+          if (served.has(id)) return;
+          unavailable.add(id);
+          option.classList.add('opacity-50');
+          option.title = t.unavailableShort;
+        });
+        setBusy(false);
+        if (currentView === 'empty') showEmpty();
       });
     }
   }
