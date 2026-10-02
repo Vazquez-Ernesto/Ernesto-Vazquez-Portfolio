@@ -21,7 +21,8 @@ Static portfolio built with **Astro 7 + Tailwind CSS v4**. It is also the first 
 | Language | TypeScript (strict) |
 | Testing | [Vitest](https://vitest.dev) — deterministic capability tests |
 | Deploy | [Vercel](https://vercel.com) — CI/CD on push to `main` |
-| Knowledge projection | Static `/api/context.json` experiment — no LLM runtime or agents |
+| Knowledge projection | Static `/api/context.json` experiment |
+| AI agents | Optional QA Agents Lab backend ([ernesto-agents](#qa-agents-lab), Spring Boot) called from the browser — the site stays static |
 
 ---
 
@@ -34,6 +35,7 @@ Static portfolio built with **Astro 7 + Tailwind CSS v4**. It is also the first 
 - **Bilingual engineering case study** — problem, alternatives, decision, implementation, evidence, and learning
 - **Knowledge Explorer** — deterministic EN/ES answers with match confidence, evidence maturity, and references
 - **Skill Evidence network** — interactive SVG graph tracing each skill to its public evidence (H2 artifacts vs H1 claims), fail-closed for untraced skills
+- **QA Agents Lab** — 9 QA agents + 1 development agent backed by an LLM, each showing its techniques and where Ernesto applied them; degrades to a browsable catalog when no backend is configured
 - **`/api/context.json`** — experimental static projection of part of that catalog
 - **Performance-first** — static output, no JS frameworks, intersection observer animations
 - **SEO** — Open Graph meta, semantic HTML, descriptive alt text
@@ -57,6 +59,7 @@ ernesto-portfolio/
 │   │   ├── certifications.ts         ← certifications
 │   │   ├── projects.ts               ← project catalog
 │   │   ├── caseStudies.ts            ← bilingual engineering case studies
+│   │   ├── qaAgents.ts               ← QA Agents Lab catalog (EN/ES + evidence)
 │   │   ├── publicKnowledge.ts         ← grounded public knowledge records
 │   │   └── agentContext.ts           ← experimental context projection
 │   ├── components/
@@ -71,6 +74,7 @@ ernesto-portfolio/
 │   │   ├── Projects.astro            ← featured projects
 │   │   ├── SkillGraph.astro          ← skill → evidence network (SVG, animated)
 │   │   ├── KnowledgeExplorer.astro    ← deterministic query interface
+│   │   ├── AgentsLab.astro            ← QA Agents Lab (10 LLM agents)
 │   │   ├── Contact.astro             ← contact links
 │   │   ├── Footer.astro
 │   │   └── ui/
@@ -81,6 +85,8 @@ ernesto-portfolio/
 │   │   │   ├── types.ts               ← capability contract
 │   │   │   ├── referenceSafety.ts     ← allowed href schemes
 │   │   │   └── queryPortfolioKnowledge.ts ← deterministic retrieval
+│   │   ├── agents-lab/
+│   │   │   └── agentsClient.ts        ← typed HTTP client for the agents backend
 │   │   └── skill-evidence/
 │   │       ├── types.ts               ← TraceSkillEvidence contract
 │   │       └── traceSkillEvidence.ts  ← curated skill → evidence map
@@ -101,6 +107,7 @@ ernesto-portfolio/
 │       └── global.css                 ← Tailwind @theme tokens
 ├── tests/
 │   ├── knowledge-explorer.test.ts     ← grounded-answer tests
+│   ├── agents-lab.test.ts             ← agents catalog + HTTP client tests
 │   ├── skill-evidence.test.ts         ← traceability and fail-closed tests
 │   └── i18n.test.ts                   ← EN/ES parity tests
 ├── docs/
@@ -227,6 +234,25 @@ The static endpoint `/api/context.json` exposes:
 }
 ```
 
+### QA Agents Lab
+
+The `#agents` section talks to [`ernesto-agents`](https://github.com/Vazquez-Ernesto/ernesto-agents) (private during the pilot; Spring Boot, Gemini with OpenRouter fallback), which holds the agents' prompts. The portfolio only knows its public URL:
+
+```bash
+cp .env.example .env    # PUBLIC_AGENTS_API_URL=http://localhost:8081
+npm run dev
+```
+
+| Agent | Category | Agent | Category |
+|---|---|---|---|
+| Test Case Designer | QA | Test Strategy Planner | QA |
+| BDD Gherkin Writer | QA | SQL Data Validator | QA |
+| Bug Report Analyst | QA | CI/CD Quality Gates | QA |
+| API Test Designer | QA | Exploratory Testing Coach | QA |
+| Test Automation Architect | QA | Code Reviewer & Developer | Dev |
+
+Agent ids in `src/data/qaAgents.ts` must match the backend's `skills/lab/*.md`; both repos test the same list. Answers are rendered with `textContent` (never `innerHTML`) because LLM output is untrusted. Decision record: EL-PILOT-006 in RFC-001.
+
 ### Evidence-driven evolution
 
 AI capabilities will be introduced only after a real portfolio use case defines:
@@ -256,7 +282,7 @@ This project deploys automatically to Vercel on every push to `main`.
 | Build Command | `astro build` |
 | Output Directory | `dist` |
 | Install Command | `npm install` |
-| Environment Variables | None required (static build) |
+| Environment Variables | `PUBLIC_AGENTS_API_URL` (optional) — URL of the ernesto-agents backend. Without it the QA Agents Lab shows the catalog only |
 
 ---
 
