@@ -26,10 +26,18 @@ function fakeFetch(status: number, body: unknown, headers: Record<string, string
 const request = { agentId: 'bug-report-analyst', message: 'Login fails', locale: 'en' as const };
 
 describe('QA Agents Lab catalog', () => {
-  it('has 10 agents in the same order as the backend', () => {
+  it('has 11 agents in the same order as the backend', () => {
     // Same list as LAB_AGENT_IDS in ernesto-agents SkillLoaderTest
     expect(qaAgentCatalog.map((agent) => agent.id)).toEqual([...QA_AGENT_IDS]);
-    expect(QA_AGENT_IDS).toHaveLength(10);
+    expect(QA_AGENT_IDS).toHaveLength(11);
+  });
+
+  it('starts with the About Ernesto agent, with localized topics', () => {
+    const [about] = qaAgentCatalog;
+    expect(about?.id).toBe('about-ernesto');
+    expect(about?.category).toBe('about');
+    expect(getQaAgents('es')[0]?.techniques).toContain('Años de experiencia');
+    expect(getQaAgents('en')[0]?.techniques).toContain('Years of experience');
   });
 
   it('has nine QA agents and one development agent', () => {
@@ -255,5 +263,18 @@ describe('waitForBackend', () => {
     expect(await waitForBackend(BASE, degraded, { sleep: noSleep, onRetry: (a) => retries.push(a) })).toBe('degraded');
     expect(await waitForBackend(null, degraded, { sleep: noSleep, onRetry: (a) => retries.push(a) })).toBe('not-configured');
     expect(retries).toEqual([]);
+  });
+});
+
+describe('agent context for the backend', () => {
+  it('publishes ISO start and end months so years of experience can be computed', async () => {
+    const { getAgentContextJSON } = await import('../src/data/agentContext');
+    const roles = getAgentContextJSON().experience;
+    expect(roles.length).toBeGreaterThan(0);
+    for (const role of roles) {
+      expect(role.startDate, role.company).toMatch(/^\d{4}-\d{2}$/);
+      expect(role.endDate === null || /^\d{4}-\d{2}$/.test(role.endDate), role.company).toBe(true);
+    }
+    expect(roles.filter((role) => role.endDate === null)).toHaveLength(1);
   });
 });

@@ -94,7 +94,12 @@ export function getAgentContextJSON() {
     experience: experience.map((e) => ({
       company: e.company,
       role: e.role,
+      contractType: e.contractType,
+      location: e.location,
       period: e.period,
+      // ISO months let the agents backend compute years of experience deterministically
+      startDate: e.startDate,
+      endDate: e.endDate,
       current: e.current,
       description: e.description,
       technologies: e.technologies,
