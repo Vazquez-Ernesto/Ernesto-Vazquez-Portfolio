@@ -11,7 +11,9 @@ const RUN_TIMEOUT_MS = 90_000;
 const HEALTH_TIMEOUT_MS = 75_000;
 
 export type LabLocale = "en" | "es";
-export type LabProvider = "GEMINI" | "OPENROUTER";
+/** Same order as the backend fallback chain. */
+export const LAB_PROVIDERS = ["GEMINI", "OLLAMA", "OPENROUTER"] as const;
+export type LabProvider = (typeof LAB_PROVIDERS)[number];
 
 export interface AgentRunRequest {
   agentId: string;
@@ -80,8 +82,8 @@ async function problemDetail(response: Response): Promise<string | undefined> {
   }
 }
 
-function isLabProvider(value: unknown): value is LabProvider {
-  return value === "GEMINI" || value === "OPENROUTER";
+export function isLabProvider(value: unknown): value is LabProvider {
+  return (LAB_PROVIDERS as readonly unknown[]).includes(value);
 }
 
 export async function runAgent(

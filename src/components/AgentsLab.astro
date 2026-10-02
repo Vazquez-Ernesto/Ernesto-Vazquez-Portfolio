@@ -136,6 +136,7 @@ const firstExample = agents[0]?.example ?? '';
               >
                 <option value="">{t.providerAuto}</option>
                 <option value="GEMINI">Gemini</option>
+                <option value="OLLAMA">Ollama</option>
                 <option value="OPENROUTER">OpenRouter</option>
               </select>
             </label>
@@ -163,6 +164,7 @@ const firstExample = agents[0]?.example ?? '';
 <script>
   import {
     waitForBackend,
+    isLabProvider,
     normalizeBaseUrl,
     runAgent,
     type AgentRunError,
@@ -195,11 +197,7 @@ const firstExample = agents[0]?.example ?? '';
     'not-configured': { key: 'notConfigured', dot: 'bg-brand-muted' },
   };
 
-  const providerNames: Record<LabProvider, string> = { GEMINI: 'Gemini', OPENROUTER: 'OpenRouter' };
-
-  function isProvider(value: string): value is LabProvider {
-    return value === 'GEMINI' || value === 'OPENROUTER';
-  }
+  const providerNames: Record<LabProvider, string> = { GEMINI: 'Gemini', OLLAMA: 'Ollama', OPENROUTER: 'OpenRouter' };
 
   function initAgentsLab(root: HTMLElement) {
     const locale = root.dataset.locale === 'es' ? 'es' : 'en';
@@ -281,7 +279,7 @@ const firstExample = agents[0]?.example ?? '';
       setBusy(true);
       meta!.textContent = '';
       showOutput(t.running, 'muted');
-      const provider = providerSelect && isProvider(providerSelect.value) ? providerSelect.value : undefined;
+      const provider = providerSelect && isLabProvider(providerSelect.value) ? providerSelect.value : undefined;
       const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider });
       if (currentRun !== runId) return;
       describe(outcome);
