@@ -3,6 +3,7 @@ import { QA_AGENT_IDS, getQaAgents, qaAgentCatalog } from '../src/data/qaAgents'
 import {
   MAX_MESSAGE_LENGTH,
   checkHealth,
+  isLabProvider,
   waitForBackend,
   normalizeBaseUrl,
   runAgent,
@@ -79,6 +80,15 @@ describe('normalizeBaseUrl', () => {
   });
 });
 
+describe('isLabProvider', () => {
+  it('accepts the three backend providers and nothing else', () => {
+    expect(['GEMINI', 'OLLAMA', 'OPENROUTER'].every(isLabProvider)).toBe(true);
+    expect(isLabProvider('OTHER')).toBe(false);
+    expect(isLabProvider('ollama')).toBe(false);
+    expect(isLabProvider(undefined)).toBe(false);
+  });
+});
+
 describe('runAgent', () => {
   it('posts to the agent endpoint and returns the answer', async () => {
     const { impl, calls } = fakeFetch(200, {
@@ -128,6 +138,11 @@ describe('runAgent', () => {
     const { impl, calls } = fakeFetch(200, {});
     expect(await runAgent(BASE, { ...request, message }, impl)).toEqual({ status: 'error', error: 'invalid-input' });
     expect(calls).toHaveLength(0);
+  });
+
+  it('accepts answers served by Ollama', async () => {
+    const { impl } = fakeFetch(200, { response: 'ok', agent: 'bug-report-analyst', provider: 'OLLAMA', fallback: true });
+    expect(await runAgent(BASE, request, impl)).toMatchObject({ status: 'ok', provider: 'OLLAMA', fallback: true });
   });
 
   it('maps 400 to invalid-input with the problem detail', async () => {
