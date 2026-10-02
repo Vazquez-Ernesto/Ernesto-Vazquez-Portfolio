@@ -3,6 +3,7 @@ import { QA_AGENT_IDS, getQaAgents, qaAgentCatalog } from '../src/data/qaAgents'
 import {
   MAX_MESSAGE_LENGTH,
   checkHealth,
+  waitForBackend,
   normalizeBaseUrl,
   runAgent,
 } from '../src/features/agents-lab/agentsClient';
@@ -187,5 +188,57 @@ describe('checkHealth', () => {
   it('reports offline when the request fails and not-configured without URL', async () => {
     expect(await checkHealth(BASE, async () => Promise.reject(new Error('down')))).toBe('offline');
     expect(await checkHealth(null)).toBe('not-configured');
+  });
+});
+
+describe('waitForBackend', () => {
+  /** Answers each health request with the next status in the list. */
+  function sequence(...statuses: number[]) {
+    let call = 0;
+    return async () => {
+      const status = statuses[Math.min(call++, statuses.length - 1)] ?? 500;
+      return status === 200
+        ? new Response(JSON.stringify({ status: 'ok' }), { status })
+        : new Response('<html>522</html>', { status });
+    };
+  }
+  const noSleep = async () => {};
+
+  it('keeps retrying while a sleeping backend wakes up', async () => {
+    const retries: number[] = [];
+    const state = await waitForBackend(BASE, sequence(522, 522, 200), {
+      sleep: noSleep,
+      onRetry: (attempt) => retries.push(attempt),
+    });
+    expect(state).toBe('online');
+    expect(retries).toEqual([1, 2]);
+  });
+
+  it('treats network errors (CORS on a proxy error page) as offline and retries', async () => {
+    let call = 0;
+    const flaky = async () => {
+      if (call++ === 0) throw new TypeError('Failed to fetch');
+      return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+    };
+    expect(await waitForBackend(BASE, flaky, { sleep: noSleep })).toBe('online');
+  });
+
+  it('gives up after the configured attempts', async () => {
+    const slept: number[] = [];
+    const state = await waitForBackend(BASE, sequence(522), {
+      attempts: 3,
+      delayMs: 5000,
+      sleep: async (ms) => { slept.push(ms); },
+    });
+    expect(state).toBe('offline');
+    expect(slept).toEqual([5000, 5000]);
+  });
+
+  it('does not retry when the backend answers (online or degraded) or is not configured', async () => {
+    const retries: number[] = [];
+    const degraded = async () => new Response(JSON.stringify({ status: 'degraded' }), { status: 200 });
+    expect(await waitForBackend(BASE, degraded, { sleep: noSleep, onRetry: (a) => retries.push(a) })).toBe('degraded');
+    expect(await waitForBackend(null, degraded, { sleep: noSleep, onRetry: (a) => retries.push(a) })).toBe('not-configured');
+    expect(retries).toEqual([]);
   });
 });
