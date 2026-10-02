@@ -162,3 +162,30 @@ export async function checkHealth(baseUrl: string | null, fetchImpl: FetchLike =
     return "offline";
   }
 }
+
+export interface WakeOptions {
+  /** Health checks to try before giving up (default 24, ~2-3 minutes with the default delay). */
+  attempts?: number;
+  delayMs?: number;
+  sleep?: (ms: number) => Promise<void>;
+  /** Called before each retry, so the UI can say the backend is waking up. */
+  onRetry?: (attempt: number) => void;
+}
+
+/**
+ * Retries the health check while the backend looks offline. A sleeping free-tier host
+ * answers the first requests with a proxy error (e.g. Cloudflare 522, without CORS
+ * headers) and only becomes reachable once the app has started.
+ */
+export async function waitForBackend(
+  baseUrl: string | null,
+  fetchImpl: FetchLike = fetch,
+  { attempts = 24, delayMs = 5_000, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), onRetry }: WakeOptions = {},
+): Promise<BackendHealth> {
+  for (let attempt = 1; ; attempt++) {
+    const state = await checkHealth(baseUrl, fetchImpl);
+    if (state !== "offline" || attempt >= attempts) return state;
+    onRetry?.(attempt);
+    await sleep(delayMs);
+  }
+}

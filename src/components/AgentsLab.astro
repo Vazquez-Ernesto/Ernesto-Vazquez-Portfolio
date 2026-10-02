@@ -162,7 +162,7 @@ const firstExample = agents[0]?.example ?? '';
 
 <script>
   import {
-    checkHealth,
+    waitForBackend,
     normalizeBaseUrl,
     runAgent,
     type AgentRunError,
@@ -322,7 +322,11 @@ const firstExample = agents[0]?.example ?? '';
     if (baseUrl !== null) {
       // A sleeping backend answers slowly: say so instead of looking broken
       const wakingTimer = window.setTimeout(() => setStatus('waking'), 4000);
-      void checkHealth(baseUrl).then((state) => {
+      const wake = () => {
+        window.clearTimeout(wakingTimer);
+        setStatus('waking');
+      };
+      void waitForBackend(baseUrl, fetch, { onRetry: wake }).then((state) => {
         window.clearTimeout(wakingTimer);
         setStatus(state);
       });
