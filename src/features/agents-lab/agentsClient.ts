@@ -6,8 +6,9 @@
  */
 
 export const MAX_MESSAGE_LENGTH = 6000;
-const RUN_TIMEOUT_MS = 60_000;
-const HEALTH_TIMEOUT_MS = 5_000;
+// Generous on purpose: the free backend host sleeps when idle and needs ~1 minute to wake up
+const RUN_TIMEOUT_MS = 90_000;
+const HEALTH_TIMEOUT_MS = 75_000;
 
 export type LabLocale = "en" | "es";
 export type LabProvider = "GEMINI" | "OPENROUTER";
