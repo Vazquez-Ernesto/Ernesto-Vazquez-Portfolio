@@ -291,7 +291,8 @@ const categoryStyles = {
   type LabStatus = BackendHealth | 'checking' | 'waking';
   type View = 'empty' | 'loading' | 'error' | 'answer';
 
-  const SLOW_HINT_AFTER_MS = 20_000;
+  // Matches the backend hedge delay (5 s): by then the next model is being asked
+  const SLOW_HINT_AFTER_MS = 6_000;
 
   const errorKeys: Record<AgentRunError, keyof LabStrings['errors']> = {
     'not-configured': 'notConfigured',
