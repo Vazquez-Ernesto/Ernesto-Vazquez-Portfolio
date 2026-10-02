@@ -20,6 +20,7 @@ const providerOptions = [
   ...LAB_PROVIDERS.map((provider) => ({ value: provider, label: providerLabels[provider], title: providerLabels[provider] })),
 ];
 const categoryStyles = {
+  about: 'border-sky-500/40 text-sky-400',
   qa: 'border-brand-green/40 text-brand-green',
   dev: 'border-purple-500/40 text-purple-400',
 };
@@ -91,7 +92,7 @@ const categoryStyles = {
 
               <dl class="mt-5 grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt class="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">{t.techniques}</dt>
+                  <dt class="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">{agent.category === 'about' ? t.topics : t.techniques}</dt>
                   <dd class="mt-2 flex flex-wrap gap-1.5">
                     {agent.techniques.map((technique) => (
                       <span class="px-2 py-0.5 text-xs rounded-md bg-brand-card border border-brand-border text-brand-text/80">{technique}</span>

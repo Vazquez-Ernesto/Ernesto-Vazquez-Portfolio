@@ -10,6 +10,7 @@ import type { Locale } from '../i18n/locale';
  */
 
 export const QA_AGENT_IDS = [
+  "about-ernesto",
   "test-case-designer",
   "bdd-gherkin-writer",
   "bug-report-analyst",
@@ -23,7 +24,7 @@ export const QA_AGENT_IDS = [
 ] as const;
 
 export type QaAgentId = (typeof QA_AGENT_IDS)[number];
-export type QaAgentCategory = "qa" | "dev";
+export type QaAgentCategory = "about" | "qa" | "dev";
 export type QaAgentMaturity = "H1" | "H2";
 
 type LocalText = Record<Locale, string>;
@@ -41,6 +42,8 @@ interface QaAgentEntry {
   name: LocalText;
   summary: LocalText;
   techniques: string[];
+  /** Localized replacement for techniques (the About agent lists topics, not techniques). */
+  topics?: Record<Locale, string[]>;
   example: LocalText;
   evidence: QaAgentEvidenceEntry[];
 }
@@ -79,6 +82,29 @@ const repo = (en: string, es: string, href: string): QaAgentEvidenceEntry => ({
 const same = (text: string): LocalText => ({ en: text, es: text });
 
 export const qaAgentCatalog: QaAgentEntry[] = [
+  {
+    id: "about-ernesto",
+    icon: "👤",
+    category: "about",
+    name: { en: "About Ernesto", es: "Sobre Ernesto" },
+    summary: {
+      en: "Ask anything about my career: where I work, my stack, years of experience, projects, and how to reach me.",
+      es: "Preguntá lo que quieras sobre mi carrera: dónde trabajo, mi stack, años de experiencia, proyectos y cómo contactarme.",
+    },
+    techniques: [],
+    topics: {
+      en: ["Current role", "Tech stack", "Years of experience", "Projects", "Contact"],
+      es: ["Rol actual", "Stack técnico", "Años de experiencia", "Proyectos", "Contacto"],
+    },
+    example: {
+      en: "Where does Ernesto work now, which technologies does he use, and how many years of QA experience does he have?",
+      es: "¿Dónde trabaja Ernesto hoy, qué tecnologías maneja y cuántos años de experiencia tiene en QA?",
+    },
+    evidence: [
+      repo("Portfolio data (src/data, typed)", "Datos del portfolio (src/data, tipados)", REPO.portfolio),
+      job("Work history in this portfolio", "Trayectoria en este portfolio"),
+    ],
+  },
   {
     id: "test-case-designer",
     icon: "🧪",
@@ -263,7 +289,7 @@ export function getQaAgents(locale: Locale): QaAgent[] {
     category: agent.category,
     name: agent.name[locale],
     summary: agent.summary[locale],
-    techniques: agent.techniques,
+    techniques: agent.topics?.[locale] ?? agent.techniques,
     example: agent.example[locale],
     evidence: agent.evidence.map((item) => ({
       label: item.label[locale],
