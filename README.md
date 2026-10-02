@@ -251,7 +251,7 @@ npm run dev
 | API Test Designer | QA | Exploratory Testing Coach | QA |
 | Test Automation Architect | QA | Code Reviewer & Developer | Dev |
 
-Agent ids in `src/data/qaAgents.ts` must match the backend's `skills/lab/*.md`; both repos test the same list. Answers are rendered with `textContent` (never `innerHTML`) because LLM output is untrusted. Decision record: EL-PILOT-006 in RFC-001.
+Agent ids in `src/data/qaAgents.ts` must match the backend's `skills/lab/*.md`; both repos test the same list. LLM output is untrusted, so answers are rendered as Markdown with two safety layers: raw HTML inside the answer is escaped (it shows as text) and the result goes through DOMPurify, which keeps only formatting tags and http(s) links (`src/features/agents-lab/renderMarkdown.ts`). Decision record: EL-PILOT-006 in RFC-001.
 
 ### Evidence-driven evolution
 
