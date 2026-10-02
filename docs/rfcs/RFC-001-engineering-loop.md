@@ -591,6 +591,28 @@ Este piloto habilita la observación de invariantes entre dos capabilities (`Que
 | Resultado | Paridad estructural verificada por tests; calidad de las traducciones pendiente de lectores nativos |
 | Madurez | Implementación H2 local; calidad lingüística H1 |
 
+### 20.6 EL-PILOT-006 — QA Agents Lab con LLM real
+
+| Campo | Resultado |
+| --- | --- |
+| Fecha | 2026-10-02 |
+| Ruta | Architectural |
+| Estado | Evaluating |
+| Problema | Las capabilities determinísticas muestran *qué* sabe Ernesto, pero no *cómo* trabaja: un visitante no puede ver aplicado su método de QA (diseño de casos, BDD, reportes de bugs, estrategia) sobre un input propio |
+| Hipótesis | Agentes especializados, cada uno con un prompt versionado que codifica un método de QA explícito, demuestran criterio técnico mejor que una lista de skills, sin comprometer el principio "la IA asiste, no gobierna" |
+| Prediction | Para cada uno de los 10 agentes, el input de ejemplo produce una salida que respeta el formato y las técnicas declaradas en su prompt; con el backend caído o sin desplegar, el portfolio sigue siendo navegable y lo informa (fail-closed) |
+| Falsifier | Un agente inventa hechos sobre Ernesto o afirma haber ejecutado pruebas; ignora su formato de salida en la mayoría de los ejemplos; la respuesta del LLM se renderiza como HTML (XSS); el sitio estático deja de funcionar sin backend; el costo o el abuso obligan a apagar la demo |
+| Product outcome | Sección "QA Agents Lab" (EN/ES): 9 agentes de QA + 1 de desarrollo, cada uno con técnicas y evidencia H1/H2 de dónde se aplicó |
+| Evidence horizon | Mismo día para comportamiento local; treinta días de uso real para evaluar calidad de respuestas, costo y abuso |
+| Observable proof | Tests del backend (router, fallback de proveedores, validación 400/404/429/503, CORS, arranque sin API keys), tests del cliente y del catálogo en el portfolio, E2E en navegador con un LLM stub |
+| Alternativas | Un chat único "sobre Ernesto" (duplica a QueryPortfolioKnowledge y no muestra método); LLM llamado desde el navegador (expone la API key); agentes en un backend separado con prompts versionados en Git |
+| Decisión | Backend separado (`ernesto-agents`, Spring Boot) con prompts en Markdown versionados, proveedores con fallback y rate limit; el portfolio sigue siendo estático y solo conoce una URL pública opcional (`PUBLIC_AGENTS_API_URL`) |
+| Artifacts | `ernesto-agents` (`skills/lab/*.md`, `LlmRouter`, tests), `features/agents-lab/agentsClient.ts`, `data/qaAgents.ts`, `AgentsLab.astro`, tests |
+| Resultado | Comportamiento de la API y la UI respaldado localmente; la calidad de las respuestas con modelos reales todavía no fue evaluada |
+| Madurez | Implementación H2 local; hipótesis de demostración de criterio H1 |
+
+Es el primer cambio que introduce un LLM en runtime y por eso toma la ruta Architectural. El LLM no reemplaza a las capabilities determinísticas: el Knowledge Explorer sigue respondiendo sin LLM, y el router del backend que elige el agente del portfolio es determinístico. El repo `ernesto-agents` es privado mientras dure la evaluación, así que la sección no lo presenta como evidencia pública (H2).
+
 ## 21. Criterios de aceptación
 
 RFC-001 podrá pasar a `Proposed` cuando:

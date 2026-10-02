@@ -1,0 +1,324 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import Tag from './ui/Tag.astro';
+import { defaultLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+import { getQaAgents } from '../data/qaAgents';
+import { MAX_MESSAGE_LENGTH, normalizeBaseUrl } from '../features/agents-lab/agentsClient';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const t = ui[locale].agentsLab;
+const agents = getQaAgents(locale);
+const apiBase = normalizeBaseUrl(import.meta.env.PUBLIC_AGENTS_API_URL) ?? '';
+const firstExample = agents[0]?.example ?? '';
+---
+
+<section id="agents" class="py-24 bg-brand-card border-y border-brand-border">
+  <div class="max-w-7xl mx-auto px-6">
+    <SectionHeader title={t.title} subtitle={t.subtitle} />
+
+    <p class="max-w-3xl mx-auto mt-8 text-center text-brand-muted leading-relaxed">{t.intro}</p>
+
+    <div class="mt-6 flex justify-center">
+      <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-full border border-brand-border text-brand-muted">
+        <span id="agents-lab-status-dot" class="w-2 h-2 rounded-full bg-brand-muted" aria-hidden="true"></span>
+        <span id="agents-lab-status" role="status">{t.status.checking}</span>
+      </span>
+    </div>
+
+    <div
+      id="agents-lab"
+      class="mt-12 grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-8"
+      data-locale={locale}
+      data-api-base={apiBase}
+    >
+      <div id="agents-lab-picker" role="radiogroup" aria-label={t.title} class="grid grid-cols-2 gap-3 content-start">
+        {agents.map((agent, index) => (
+          <button
+            type="button"
+            role="radio"
+            aria-checked={index === 0 ? 'true' : 'false'}
+            tabindex={index === 0 ? 0 : -1}
+            data-agent-id={agent.id}
+            class="agent-option text-left p-4 rounded-xl border border-brand-border bg-brand-bg transition-colors hover:border-brand-green/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green aria-checked:border-brand-green aria-checked:bg-brand-green/5"
+          >
+            <span class="flex items-start justify-between gap-2">
+              <span class="text-2xl" aria-hidden="true">{agent.icon}</span>
+              <span
+                class:list={[
+                  'px-2 py-0.5 text-[10px] font-semibold uppercase rounded border',
+                  agent.category === 'dev'
+                    ? 'border-purple-500/40 text-purple-400'
+                    : 'border-brand-green/40 text-brand-green',
+                ]}
+              >
+                {t.categories[agent.category]}
+              </span>
+            </span>
+            <span class="block mt-3 text-sm font-semibold leading-snug text-brand-text">{agent.name}</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="min-w-0 rounded-xl border border-brand-border bg-brand-bg p-6">
+        {agents.map((agent, index) => (
+          <div class:list={['agent-details', { hidden: index !== 0 }]} data-agent-id={agent.id} data-example={agent.example}>
+            <h3 class="flex items-center gap-2 text-xl font-semibold text-brand-text">
+              <span aria-hidden="true">{agent.icon}</span>
+              {agent.name}
+            </h3>
+            <p class="mt-2 text-sm leading-relaxed text-brand-muted">{agent.summary}</p>
+
+            <div class="mt-5 grid sm:grid-cols-2 gap-5">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-brand-muted">{t.techniques}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  {agent.techniques.map((technique) => <Tag label={technique} />)}
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-brand-muted">{t.evidence}</p>
+                <ul class="mt-2 space-y-2">
+                  {agent.evidence.map((item) => (
+                    <li class="flex items-start gap-2 text-sm">
+                      <span class="shrink-0 px-1.5 py-0.5 text-[10px] font-semibold border border-brand-green/40 text-brand-green">
+                        {item.maturity}
+                      </span>
+                      <a
+                        href={item.href}
+                        class="text-brand-muted hover:text-brand-green transition-colors"
+                        {...(item.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      >
+                        {item.label}{item.href.startsWith('http') && ' ↗'}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <form id="agents-lab-form" class="mt-6 space-y-3" novalidate>
+          <label for="agents-lab-input" class="block text-sm font-semibold text-brand-text">{t.inputLabel}</label>
+          <textarea
+            id="agents-lab-input"
+            rows="8"
+            maxlength={MAX_MESSAGE_LENGTH}
+            placeholder={t.placeholder}
+            class="w-full p-4 font-mono text-sm leading-relaxed bg-brand-card border border-brand-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-green"
+          >{firstExample}</textarea>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              id="agents-lab-run"
+              type="submit"
+              class="h-11 px-5 bg-brand-green text-brand-bg font-semibold hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span id="agents-lab-run-label">{t.run}</span> <span aria-hidden="true">→</span>
+            </button>
+            <button
+              id="agents-lab-example"
+              type="button"
+              class="h-11 px-4 text-sm border border-brand-border text-brand-muted hover:text-brand-green hover:border-brand-green/50 transition-colors"
+            >
+              {t.useExample}
+            </button>
+            <label class="sm:ml-auto flex items-center gap-2 text-xs text-brand-muted">
+              {t.providerLabel}
+              <select
+                id="agents-lab-provider"
+                class="h-9 px-2 bg-brand-card border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
+              >
+                <option value="">{t.providerAuto}</option>
+                <option value="GEMINI">Gemini</option>
+                <option value="OPENROUTER">OpenRouter</option>
+              </select>
+            </label>
+          </div>
+        </form>
+
+        <div class="mt-6 pt-5 border-t border-brand-border" aria-live="polite" aria-busy="false" id="agents-lab-result">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h4 class="text-sm font-semibold text-brand-text">{t.outputTitle}</h4>
+            <span id="agents-lab-meta" class="text-xs text-brand-muted"></span>
+          </div>
+          <!-- The answer is inserted with textContent, never innerHTML: LLM output is untrusted (XSS). -->
+          <div
+            id="agents-lab-output"
+            class="mt-3 max-h-[32rem] overflow-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-brand-muted"
+          >{t.emptyOutput}</div>
+        </div>
+
+        <p class="mt-6 pl-3 border-l-2 border-brand-border text-xs leading-relaxed text-brand-muted">{t.disclaimer}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    checkHealth,
+    normalizeBaseUrl,
+    runAgent,
+    type AgentRunError,
+    type AgentRunResult,
+    type BackendHealth,
+    type LabProvider,
+  } from '../features/agents-lab/agentsClient';
+  import { ui, type UiStrings } from '../i18n/ui';
+
+  type LabStrings = UiStrings['agentsLab'];
+
+  const errorKeys: Record<AgentRunError, keyof LabStrings['errors']> = {
+    'not-configured': 'notConfigured',
+    'invalid-input': 'invalidInput',
+    'unknown-agent': 'unknownAgent',
+    'rate-limited': 'rateLimited',
+    unavailable: 'unavailable',
+    network: 'network',
+    unexpected: 'unexpected',
+  };
+
+  const statusStyles: Record<BackendHealth | 'checking', { key: keyof LabStrings['status']; dot: string }> = {
+    checking: { key: 'checking', dot: 'bg-brand-muted' },
+    online: { key: 'online', dot: 'bg-brand-green' },
+    degraded: { key: 'degraded', dot: 'bg-yellow-500' },
+    offline: { key: 'offline', dot: 'bg-brand-red' },
+    'not-configured': { key: 'notConfigured', dot: 'bg-brand-muted' },
+  };
+
+  const providerNames: Record<LabProvider, string> = { GEMINI: 'Gemini', OPENROUTER: 'OpenRouter' };
+
+  function isProvider(value: string): value is LabProvider {
+    return value === 'GEMINI' || value === 'OPENROUTER';
+  }
+
+  function initAgentsLab(root: HTMLElement) {
+    const locale = root.dataset.locale === 'es' ? 'es' : 'en';
+    const t = ui[locale].agentsLab;
+    const baseUrl = normalizeBaseUrl(root.dataset.apiBase);
+
+    const options = [...root.querySelectorAll<HTMLButtonElement>('.agent-option')];
+    const details = [...root.querySelectorAll<HTMLElement>('.agent-details')];
+    const picker = root.querySelector<HTMLElement>('#agents-lab-picker');
+    const form = root.querySelector<HTMLFormElement>('#agents-lab-form');
+    const input = root.querySelector<HTMLTextAreaElement>('#agents-lab-input');
+    const runButton = root.querySelector<HTMLButtonElement>('#agents-lab-run');
+    const runLabel = root.querySelector<HTMLElement>('#agents-lab-run-label');
+    const exampleButton = root.querySelector<HTMLButtonElement>('#agents-lab-example');
+    const providerSelect = root.querySelector<HTMLSelectElement>('#agents-lab-provider');
+    const result = root.querySelector<HTMLElement>('#agents-lab-result');
+    const output = root.querySelector<HTMLElement>('#agents-lab-output');
+    const meta = root.querySelector<HTMLElement>('#agents-lab-meta');
+    const statusText = document.querySelector<HTMLElement>('#agents-lab-status');
+    const statusDot = document.querySelector<HTMLElement>('#agents-lab-status-dot');
+    if (!form || !input || !runButton || !output || !meta) return;
+
+    let selected = options[0]?.dataset.agentId ?? '';
+    // Ignores answers that arrive after the visitor switched agents or ran again
+    let runId = 0;
+
+    const exampleFor = (id: string) => details.find((item) => item.dataset.agentId === id)?.dataset.example ?? '';
+
+    function showOutput(text: string, tone: 'muted' | 'answer' | 'error') {
+      output!.textContent = text;
+      output!.classList.toggle('text-brand-muted', tone === 'muted');
+      output!.classList.toggle('text-brand-text', tone === 'answer');
+      output!.classList.toggle('text-brand-red', tone === 'error');
+    }
+
+    function setBusy(busy: boolean) {
+      runButton!.disabled = busy || baseUrl === null;
+      if (runLabel) runLabel.textContent = busy ? t.running : t.run;
+      result?.setAttribute('aria-busy', String(busy));
+    }
+
+    function resetOutput() {
+      meta!.textContent = '';
+      if (baseUrl === null) showOutput(t.errors.notConfigured, 'muted');
+      else showOutput(t.emptyOutput, 'muted');
+    }
+
+    function select(id: string, focus = false) {
+      const previousExample = exampleFor(selected);
+      selected = id;
+      runId++;
+      setBusy(false);
+      options.forEach((option) => {
+        const active = option.dataset.agentId === id;
+        option.setAttribute('aria-checked', String(active));
+        option.tabIndex = active ? 0 : -1;
+        if (active && focus) option.focus();
+      });
+      details.forEach((item) => item.classList.toggle('hidden', item.dataset.agentId !== id));
+      // Keep what the visitor wrote; only swap the text when it is still a sample
+      if (!input!.value.trim() || input!.value === previousExample) input!.value = exampleFor(id);
+      resetOutput();
+    }
+
+    function describe(outcome: AgentRunResult) {
+      if (outcome.status === 'ok') {
+        const fallback = outcome.fallback ? ` (${t.fallback})` : '';
+        meta!.textContent = `${t.servedBy}: ${providerNames[outcome.provider]}${fallback} · ${(outcome.latencyMs / 1000).toFixed(1)} s`;
+        showOutput(outcome.response, 'answer');
+        return;
+      }
+      meta!.textContent = '';
+      const message = t.errors[errorKeys[outcome.error]];
+      showOutput(outcome.detail && outcome.error === 'invalid-input' ? `${message}\n${outcome.detail}` : message, 'error');
+    }
+
+    async function run() {
+      const currentRun = ++runId;
+      setBusy(true);
+      meta!.textContent = '';
+      showOutput(t.running, 'muted');
+      const provider = providerSelect && isProvider(providerSelect.value) ? providerSelect.value : undefined;
+      const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider });
+      if (currentRun !== runId) return;
+      describe(outcome);
+      setBusy(false);
+    }
+
+    options.forEach((option) => option.addEventListener('click', () => select(option.dataset.agentId ?? '')));
+
+    // Arrow keys move through the radio group (WAI-ARIA radio pattern)
+    picker?.addEventListener('keydown', (event) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      if (!step) return;
+      event.preventDefault();
+      const index = options.findIndex((option) => option.dataset.agentId === selected);
+      const next = options[(index + step + options.length) % options.length];
+      if (next?.dataset.agentId) select(next.dataset.agentId, true);
+    });
+
+    exampleButton?.addEventListener('click', () => {
+      input.value = exampleFor(selected);
+      input.focus();
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void run();
+    });
+
+    function setStatus(state: BackendHealth | 'checking') {
+      const style = statusStyles[state];
+      if (statusText) statusText.textContent = t.status[style.key];
+      if (statusDot) statusDot.className = `w-2 h-2 rounded-full ${style.dot}`;
+    }
+
+    resetOutput();
+    setBusy(false);
+    setStatus(baseUrl === null ? 'not-configured' : 'checking');
+    if (baseUrl !== null) void checkHealth(baseUrl).then(setStatus);
+  }
+
+  const root = document.querySelector<HTMLElement>('#agents-lab');
+  if (root) initAgentsLab(root);
+</script>
