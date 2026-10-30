@@ -4,6 +4,7 @@ import {
   MAX_MESSAGE_LENGTH,
   checkHealth,
   fetchAvailableAgents,
+  fetchModelCatalog,
   isLabProvider,
   waitForBackend,
   normalizeBaseUrl,
@@ -134,6 +135,29 @@ describe('runAgent', () => {
       locale: 'en',
       provider: 'GEMINI',
     });
+  });
+
+  it('sends the chosen model together with its provider', async () => {
+    const { impl, calls } = fakeFetch(200, {
+      response: 'ok',
+      agent: 'bug-report-analyst',
+      provider: 'OLLAMA',
+    });
+
+    await runAgent(BASE, { ...request, provider: 'OLLAMA', model: 'gpt-oss:20b' }, impl);
+
+    expect(JSON.parse(String(calls[0]?.init?.body))).toMatchObject({ provider: 'OLLAMA', model: 'gpt-oss:20b' });
+  });
+
+  it.each([
+    ['no provider was chosen', { ...request, model: 'gpt-oss:20b' }],
+    ['the choice is the provider default', { ...request, provider: 'OLLAMA' as const, model: '' }],
+  ])('sends no model when %s', async (_, payload) => {
+    const { impl, calls } = fakeFetch(200, { response: 'ok', agent: 'bug-report-analyst', provider: 'OLLAMA' });
+
+    await runAgent(BASE, payload, impl);
+
+    expect(JSON.parse(String(calls[0]?.init?.body))).not.toHaveProperty('model');
   });
 
   it('encodes the agent id in the URL', async () => {
@@ -308,5 +332,49 @@ describe('fetchAvailableAgents', () => {
   it('ignores malformed entries', async () => {
     const { impl } = fakeFetch(200, [{ id: 'ok' }, { id: 7 }, null, 'x']);
     expect(await fetchAvailableAgents(BASE, impl)).toEqual(new Set(['ok']));
+  });
+});
+
+describe('fetchModelCatalog', () => {
+  it('groups the models of every provider that serves one', async () => {
+    const { impl, calls } = fakeFetch(200, {
+      models: {
+        GEMINI: [{ id: 'gemini-flash-lite-latest', name: 'Gemini Flash-Lite' }],
+        OLLAMA: [
+          { id: 'gpt-oss:120b', name: 'GPT OSS 120B' },
+          { id: 'gpt-oss:20b', name: 'GPT OSS 20B' },
+        ],
+      },
+    });
+
+    expect(await fetchModelCatalog(BASE, impl)).toEqual({
+      GEMINI: [{ id: 'gemini-flash-lite-latest', name: 'Gemini Flash-Lite' }],
+      OLLAMA: [
+        { id: 'gpt-oss:120b', name: 'GPT OSS 120B' },
+        { id: 'gpt-oss:20b', name: 'GPT OSS 20B' },
+      ],
+    });
+    expect(calls[0]?.url).toBe(`${BASE}/api/models`);
+  });
+
+  it('drops empty providers so the picker never offers a dead one', async () => {
+    const { impl } = fakeFetch(200, { models: { GEMINI: [], OLLAMA: [{ id: 'gpt-oss:20b' }] } });
+    expect(await fetchModelCatalog(BASE, impl)).toEqual({ OLLAMA: [{ id: 'gpt-oss:20b', name: 'gpt-oss:20b' }] });
+  });
+
+  it.each([
+    ['not configured', null, fakeFetch(200, {}).impl],
+    ['HTTP error', BASE, fakeFetch(404, {}).impl],
+    ['no models key', BASE, fakeFetch(200, { current: {} }).impl],
+    ['network error', BASE, async () => Promise.reject(new TypeError('Failed to fetch'))],
+  ])('returns null (hide the picker) when %s', async (_, base, impl) => {
+    expect(await fetchModelCatalog(base, impl)).toBeNull();
+  });
+
+  it('ignores malformed entries and unknown providers', async () => {
+    const { impl } = fakeFetch(200, {
+      models: { GEMINI: [{ id: 'ok' }, { name: 'no id' }, null], GROQ: [{ id: 'not-served' }] },
+    });
+    expect(await fetchModelCatalog(BASE, impl)).toEqual({ GEMINI: [{ id: 'ok', name: 'ok' }] });
   });
 });

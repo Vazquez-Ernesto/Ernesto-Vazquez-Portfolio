@@ -174,6 +174,17 @@ const categoryStyles = {
               </div>
             </fieldset>
 
+            <label
+              id="agents-lab-model-field"
+              class="hidden items-center gap-1.5"
+            >
+              <span class="text-xs text-brand-muted shrink-0">{t.modelLabel}</span>
+              <select
+                id="agents-lab-model"
+                class="rounded-lg border border-brand-border bg-brand-card px-2 py-1 text-xs text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green"
+              ></select>
+            </label>
+
             <button
               id="agents-lab-run"
               type="submit"
@@ -277,6 +288,7 @@ const categoryStyles = {
 <script>
   import {
     fetchAvailableAgents,
+    fetchModelCatalog,
     isLabProvider,
     normalizeBaseUrl,
     runAgent,
@@ -284,6 +296,7 @@ const categoryStyles = {
     type AgentRunError,
     type AgentRunResult,
     type BackendHealth,
+    type LabModelCatalog,
     type LabProvider,
   } from '../features/agents-lab/agentsClient';
   import { renderMarkdown } from '../features/agents-lab/renderMarkdown';
@@ -350,11 +363,15 @@ const categoryStyles = {
     const copyButton = $<HTMLButtonElement>('#agents-lab-copy');
     const statusText = document.querySelector<HTMLElement>('#agents-lab-status');
     const statusDot = document.querySelector<HTMLElement>('#agents-lab-status-dot');
+    const modelField = $('#agents-lab-model-field');
+    const modelSelect = $<HTMLSelectElement>('#agents-lab-model');
     if (!form || !input || !runButton || !views.answer) return;
 
     let selected = options[0]?.dataset.agentId ?? '';
     let lastAnswer = '';
     let currentView: View = 'empty';
+    // Models per provider, from GET /models. Null until they load (or when they cannot be read).
+    let modelCatalog: LabModelCatalog | null = null;
     // Agents the frontend lists but the backend does not serve yet (a deploy in progress)
     const unavailable = new Set<string>();
     // Ignores answers that arrive after the visitor switched agents or ran again
@@ -362,6 +379,44 @@ const categoryStyles = {
     let timer: number | undefined;
 
     const exampleFor = (id: string) => details.find((item) => item.dataset.agentId === id)?.dataset.example ?? '';
+
+    /** The provider the visitor picked, or undefined for "Auto" (backend default chain). */
+    function selectedProvider(): LabProvider | undefined {
+      const checked = root.querySelector<HTMLInputElement>('input[name="agents-lab-provider"]:checked');
+      return checked && isLabProvider(checked.value) ? checked.value : undefined;
+    }
+
+    /**
+     * A model id belongs to one provider's catalog, so the model picker only exists once a
+     * provider is chosen. With "Auto" there is nothing to choose: the backend decides.
+     */
+    function syncModelPicker() {
+      if (!modelField || !modelSelect) return;
+      const provider = selectedProvider();
+      const models = provider && modelCatalog ? modelCatalog[provider] : undefined;
+      if (!models || models.length === 0) {
+        modelField.classList.add('hidden');
+        modelField.classList.remove('inline-flex');
+        modelSelect.innerHTML = '';
+        return;
+      }
+      const previous = modelSelect.value;
+      modelSelect.innerHTML = '';
+      const auto = document.createElement('option');
+      auto.value = '';
+      auto.textContent = t.modelAuto;
+      modelSelect.appendChild(auto);
+      models.forEach((model) => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.name;
+        modelSelect.appendChild(option);
+      });
+      // Keep the visitor's choice when it survives the provider switch.
+      modelSelect.value = models.some((model) => model.id === previous) ? previous : '';
+      modelField.classList.remove('hidden');
+      modelField.classList.add('inline-flex');
+    }
 
     function show(view: View) {
       currentView = view;
@@ -452,15 +507,19 @@ const categoryStyles = {
         if (ms > SLOW_HINT_AFTER_MS) slowHint?.classList.remove('hidden');
       }, 100);
 
-      const checked = root.querySelector<HTMLInputElement>('input[name="agents-lab-provider"]:checked');
-      const provider = checked && isLabProvider(checked.value) ? checked.value : undefined;
-      const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider });
+      const provider = selectedProvider();
+      const model = provider ? modelSelect?.value || undefined : undefined;
+      const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider, model });
       if (currentRun !== runId) return;
       describe(outcome);
       setBusy(false);
     }
 
     options.forEach((option) => option.addEventListener('click', () => select(option.dataset.agentId ?? '')));
+
+    root.querySelectorAll<HTMLInputElement>('input[name="agents-lab-provider"]').forEach((radio) => {
+      radio.addEventListener('change', syncModelPicker);
+    });
 
     // Arrow keys move through the radio group (WAI-ARIA radio pattern)
     picker?.addEventListener('keydown', (event) => {
@@ -524,6 +583,10 @@ const categoryStyles = {
         window.clearTimeout(wakingTimer);
         setStatus(state);
         if (state !== 'online' && state !== 'degraded') return;
+        // The model picker depends on this endpoint: fetch it once the backend is awake,
+        // because a sleeping host answers with a proxy error that reads as "no catalog".
+        modelCatalog = await fetchModelCatalog(baseUrl);
+        syncModelPicker();
         const served = await fetchAvailableAgents(baseUrl);
         if (!served) return;
         options.forEach((option) => {

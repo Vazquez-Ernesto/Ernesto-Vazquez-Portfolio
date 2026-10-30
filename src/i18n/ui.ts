@@ -99,6 +99,8 @@ export interface UiStrings {
     providerLabel: string;
     providerAuto: string;
     providerAutoShort: string;
+    modelLabel: string;
+    modelAuto: string;
     agentList: string;
     shortcut: string;
     characters: string;
@@ -254,9 +256,11 @@ const en: UiStrings = {
     run: "Run agent",
     running: "Running…",
     useExample: "Use sample input",
-    providerLabel: "Preferred model",
+    providerLabel: "Provider",
     providerAuto: "Auto (Gemini → Ollama → OpenRouter)",
     providerAutoShort: "Auto",
+    modelLabel: "Model",
+    modelAuto: "Provider default",
     agentList: "QA agents",
     shortcut: "Ctrl + Enter to run",
     characters: "characters",
@@ -412,9 +416,11 @@ const es: UiStrings = {
     run: "Ejecutar agente",
     running: "Ejecutando…",
     useExample: "Usar ejemplo",
-    providerLabel: "Modelo preferido",
+    providerLabel: "Proveedor",
     providerAuto: "Auto (Gemini → Ollama → OpenRouter)",
     providerAutoShort: "Auto",
+    modelLabel: "Modelo",
+    modelAuto: "Predeterminado del proveedor",
     agentList: "Agentes de QA",
     shortcut: "Ctrl + Enter para ejecutar",
     characters: "caracteres",

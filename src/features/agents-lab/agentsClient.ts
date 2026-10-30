@@ -21,6 +21,11 @@ export interface AgentRunRequest {
   locale: LabLocale;
   /** Preferred provider for this request only; the backend falls back to the other one. */
   provider?: LabProvider;
+  /**
+   * Model id from GET /models. Only meaningful together with an explicit provider: a model
+   * belongs to one provider's catalog, so it is dropped when no provider was chosen.
+   */
+  model?: string;
 }
 
 export type AgentRunError =
@@ -101,12 +106,13 @@ export async function runAgent(
   }
 
   const started = now();
+  const model = request.provider ? request.model?.trim() || undefined : undefined;
   let response: Response;
   try {
     response = await fetchImpl(`${baseUrl}/api/agents/${encodeURIComponent(request.agentId)}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, locale: request.locale, provider: request.provider }),
+      body: JSON.stringify({ message, locale: request.locale, provider: request.provider, model }),
       signal: timeoutSignal(RUN_TIMEOUT_MS),
     });
   } catch {
@@ -185,6 +191,46 @@ export async function fetchAvailableAgents(
         .map((agent) => (agent as { id?: unknown } | null)?.id)
         .filter((id): id is string => typeof id === "string"),
     );
+  } catch {
+    return null;
+  }
+}
+
+export interface LabModelOption {
+  id: string;
+  name: string;
+}
+
+/** Only providers that can serve a model right now appear here. */
+export type LabModelCatalog = Partial<Record<LabProvider, LabModelOption[]>>;
+
+/**
+ * Models each provider can serve (GET /models), or null when the catalog cannot be read.
+ * A null catalog is not an error: the UI then hides the model picker and sends no override,
+ * which is exactly what the backend does by default.
+ */
+export async function fetchModelCatalog(
+  baseUrl: string | null,
+  fetchImpl: FetchLike = fetch,
+): Promise<LabModelCatalog | null> {
+  if (!baseUrl) return null;
+  try {
+    const response = await fetchImpl(`${baseUrl}/api/models`, { signal: timeoutSignal(HEALTH_TIMEOUT_MS) });
+    if (!response.ok) return null;
+    const body: unknown = await response.json();
+    const models = (body as { models?: unknown } | null)?.models;
+    if (!models || typeof models !== "object") return null;
+    const catalog: LabModelCatalog = {};
+    for (const provider of LAB_PROVIDERS) {
+      const list = (models as Record<string, unknown>)[provider];
+      if (!Array.isArray(list)) continue;
+      const options = list
+        .map((item) => item as { id?: unknown; name?: unknown } | null)
+        .filter((item): item is { id: string; name?: unknown } => typeof item?.id === "string")
+        .map((item) => ({ id: item.id, name: typeof item.name === "string" ? item.name : item.id }));
+      if (options.length > 0) catalog[provider] = options;
+    }
+    return catalog;
   } catch {
     return null;
   }
