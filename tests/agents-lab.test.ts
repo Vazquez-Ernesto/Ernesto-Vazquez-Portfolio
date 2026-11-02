@@ -160,6 +160,30 @@ describe('runAgent', () => {
     expect(JSON.parse(String(calls[0]?.init?.body))).not.toHaveProperty('model');
   });
 
+  it('reports the model the backend named', async () => {
+    const { impl } = fakeFetch(200, {
+      response: 'ok',
+      agent: 'bug-report-analyst',
+      provider: 'OLLAMA',
+      model: 'gpt-oss:20b',
+    });
+
+    expect(await runAgent(BASE, request, impl)).toMatchObject({ status: 'ok', model: 'gpt-oss:20b' });
+  });
+
+  it.each([
+    ['absent', undefined],
+    ['blank', '  '],
+    ['not a string', 7],
+  ])('leaves the model undefined when it is %s', async (_, model) => {
+    const { impl } = fakeFetch(200, { response: 'ok', agent: 'bug-report-analyst', provider: 'OLLAMA', model });
+
+    const result = await runAgent(BASE, request, impl);
+
+    expect(result).toMatchObject({ status: 'ok' });
+    expect(result).not.toHaveProperty('model');
+  });
+
   it('encodes the agent id in the URL', async () => {
     const { impl, calls } = fakeFetch(404, {});
     await runAgent(BASE, { ...request, agentId: '../health' }, impl);

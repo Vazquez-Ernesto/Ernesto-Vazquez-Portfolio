@@ -202,6 +202,7 @@ const categoryStyles = {
             <span id="agents-lab-meta" class="hidden items-center gap-1.5 text-xs text-brand-muted">
               <span>{t.servedBy}</span>
               <span id="agents-lab-meta-provider" class="px-1.5 py-0.5 rounded border border-brand-border text-brand-text"></span>
+              <span id="agents-lab-meta-model" class="hidden px-1.5 py-0.5 rounded border border-brand-border font-mono text-[11px] text-brand-text"></span>
               <span id="agents-lab-meta-fallback" class="hidden px-1.5 py-0.5 rounded border border-yellow-500/40 text-yellow-400">{t.fallback}</span>
               <span id="agents-lab-meta-latency"></span>
             </span>
@@ -358,6 +359,7 @@ const categoryStyles = {
     const retryButton = $<HTMLButtonElement>('#agents-lab-retry');
     const meta = $('#agents-lab-meta');
     const metaProvider = $('#agents-lab-meta-provider');
+    const metaModel = $('#agents-lab-meta-model');
     const metaFallback = $('#agents-lab-meta-fallback');
     const metaLatency = $('#agents-lab-meta-latency');
     const copyButton = $<HTMLButtonElement>('#agents-lab-copy');
@@ -484,6 +486,12 @@ const categoryStyles = {
         lastAnswer = outcome.response;
         views.answer!.innerHTML = renderMarkdown(outcome.response);
         if (metaProvider) metaProvider.textContent = providerNames[outcome.provider];
+        // The backend names the model that answered; when it cannot, the chip is hidden
+        // instead of showing a guess (e.g. the model of the provider the visitor picked).
+        if (metaModel) {
+          metaModel.textContent = outcome.model ?? '';
+          metaModel.classList.toggle('hidden', !outcome.model);
+        }
         metaFallback?.classList.toggle('hidden', !outcome.fallback);
         if (metaLatency) metaLatency.textContent = `· ${(outcome.latencyMs / 1000).toFixed(1)} s`;
         show('answer');

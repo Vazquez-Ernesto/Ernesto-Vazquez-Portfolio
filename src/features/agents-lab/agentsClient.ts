@@ -43,6 +43,8 @@ export type AgentRunResult =
       response: string;
       agent: string;
       provider: LabProvider;
+      /** Model that produced the answer; absent when the backend cannot name it. */
+      model?: string;
       fallback: boolean;
       latencyMs: number;
     }
@@ -146,14 +148,17 @@ export async function runAgent(
     if (typeof body?.response !== "string" || !isLabProvider(body?.provider)) {
       return { status: "error", error: "unexpected", detail: "Malformed response" };
     }
-    return {
-      status: "ok",
+    const model = typeof body.model === "string" ? body.model.trim() : "";
+    const answer = {
+      status: "ok" as const,
       response: body.response,
       agent: String(body.agent ?? request.agentId),
       provider: body.provider,
       fallback: body.fallback === true,
       latencyMs: Math.max(0, Math.round(now() - started)),
     };
+    // Only present when the backend actually named a model: the UI hides the chip otherwise
+    return model ? { ...answer, model } : answer;
   } catch {
     return { status: "error", error: "unexpected", detail: "Invalid JSON" };
   }
