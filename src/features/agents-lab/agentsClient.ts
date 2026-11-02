@@ -6,8 +6,8 @@
  */
 
 // Same value as ChatRequest.MAX_MESSAGE_LENGTH in ernesto-agents: the backend rejects longer
-// messages with a 400, so this is the real ceiling, not an UI suggestion.
-export const MAX_MESSAGE_LENGTH = 20_000;
+// messages with a 400, so this is the real ceiling, not an UI suggestion. ~25k tokens.
+export const MAX_MESSAGE_LENGTH = 100_000;
 // Generous on purpose: the free backend host sleeps when idle and needs ~1 minute to wake up
 const RUN_TIMEOUT_MS = 90_000;
 const HEALTH_TIMEOUT_MS = 75_000;
