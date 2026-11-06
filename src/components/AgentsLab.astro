@@ -226,6 +226,7 @@ const categoryStyles = {
               </span>
               <span>{t.running} <span id="agents-lab-elapsed" class="tabular-nums">0.0</span> s</span>
             </div>
+            <p id="agents-lab-progress" class="hidden mt-2 text-xs text-brand-green/90"></p>
             <p id="agents-lab-slow" class="hidden mt-2 text-xs text-yellow-400/90">{t.slowHint}</p>
             <div class="mt-4 space-y-2" aria-hidden="true">
               <div class="h-3 w-3/4 rounded bg-white/[0.06] animate-pulse"></div>
@@ -292,7 +293,7 @@ const categoryStyles = {
     fetchModelCatalog,
     isLabProvider,
     normalizeBaseUrl,
-    runAgent,
+    runAgentStreaming,
     waitForBackend,
     type AgentRunError,
     type AgentRunResult,
@@ -355,6 +356,7 @@ const categoryStyles = {
     };
     const elapsed = $('#agents-lab-elapsed');
     const slowHint = $('#agents-lab-slow');
+    const progressText = $('#agents-lab-progress');
     const errorText = $('#agents-lab-error-text');
     const retryButton = $<HTMLButtonElement>('#agents-lab-retry');
     const meta = $('#agents-lab-meta');
@@ -459,6 +461,13 @@ const categoryStyles = {
       show('error');
     }
 
+    /** The live "asking Gemini…" line: it describes the wait, not the answer. */
+    function showProgress(text: string | null) {
+      if (!progressText) return;
+      progressText.textContent = text ?? '';
+      progressText.classList.toggle('hidden', !text);
+    }
+
     function select(id: string, focus = false) {
       const previousExample = exampleFor(selected);
       selected = id;
@@ -505,6 +514,7 @@ const categoryStyles = {
       const currentRun = ++runId;
       setBusy(true);
       show('loading');
+      showProgress(null);
       slowHint?.classList.add('hidden');
       if (elapsed) elapsed.textContent = '0.0';
       const started = performance.now();
@@ -517,7 +527,21 @@ const categoryStyles = {
 
       const provider = selectedProvider();
       const model = provider ? modelSelect?.value || undefined : undefined;
-      const outcome = await runAgent(baseUrl, { agentId: selected, message: input!.value, locale, provider, model });
+      // No event after a few seconds means the request has not reached the app yet: the free
+      // host is asleep. Saying so is better than a timer that does not move.
+      const waking = window.setTimeout(() => showProgress(t.progressConnecting), 4_000);
+      // Streaming here means progress events, not partial text: the backend still falls back
+      // to another provider if the first one fails, and the answer arrives complete.
+      const outcome = await runAgentStreaming(
+        baseUrl,
+        { agentId: selected, message: input!.value, locale, provider, model },
+        ({ stage, provider: answering }) => {
+          window.clearTimeout(waking);
+          const template = stage === 'provider' ? t.progressProvider : t.progressRetry;
+          showProgress(template.replace('{provider}', providerNames[answering]));
+        },
+      );
+      window.clearTimeout(waking);
       if (currentRun !== runId) return;
       describe(outcome);
       setBusy(false);

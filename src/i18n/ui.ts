@@ -108,6 +108,9 @@ export interface UiStrings {
     copied: string;
     retry: string;
     slowHint: string;
+    progressConnecting: string;
+    progressProvider: string;
+    progressRetry: string;
     unavailable: string;
     unavailableShort: string;
     outputTitle: string;
@@ -268,6 +271,9 @@ const en: UiStrings = {
     copied: "Copied",
     retry: "Try again",
     slowHint: "The first model is slow or unavailable, trying the next one…",
+    progressConnecting: "Waking the backend…",
+    progressProvider: "Asking {provider}…",
+    progressRetry: "Also asking {provider}…",
     unavailable: "This agent is being deployed right now. Try again in a few minutes.",
     unavailableShort: "Deploying, available in a few minutes",
     outputTitle: "Agent output",
@@ -276,7 +282,7 @@ const en: UiStrings = {
     fallback: "fallback",
     errors: {
       notConfigured: "The live backend is not deployed yet. You can still browse each agent's specialty, techniques, and sample input.",
-      invalidInput: "Write something for the agent (up to 6,000 characters).",
+      invalidInput: "Write something for the agent (up to 100,000 characters).",
       unknownAgent: "That agent does not exist on the backend.",
       rateLimited: "Too many requests. Try again in a minute.",
       unavailable: "The AI models are not available right now. Try again later.",
@@ -428,6 +434,9 @@ const es: UiStrings = {
     copied: "Copiado",
     retry: "Reintentar",
     slowHint: "El primer modelo está lento o no disponible, probando con el siguiente…",
+    progressConnecting: "Despertando el backend…",
+    progressProvider: "Consultando a {provider}…",
+    progressRetry: "Consultando también a {provider}…",
     unavailable: "Este agente se está desplegando en este momento. Probá de nuevo en unos minutos.",
     unavailableShort: "Desplegándose, disponible en unos minutos",
     outputTitle: "Respuesta del agente",
@@ -436,7 +445,7 @@ const es: UiStrings = {
     fallback: "respaldo",
     errors: {
       notConfigured: "El backend en vivo todavía no está desplegado. Igual podés ver la especialidad, las técnicas y el ejemplo de cada agente.",
-      invalidInput: "Escribí algo para el agente (hasta 6.000 caracteres).",
+      invalidInput: "Escribí algo para el agente (hasta 100.000 caracteres).",
       unknownAgent: "Ese agente no existe en el backend.",
       rateLimited: "Demasiadas consultas. Probá de nuevo en un minuto.",
       unavailable: "Los modelos de IA no están disponibles ahora. Probá más tarde.",

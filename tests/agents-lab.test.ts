@@ -9,6 +9,8 @@ import {
   waitForBackend,
   normalizeBaseUrl,
   runAgent,
+  runAgentStreaming,
+  type AgentProgress,
 } from '../src/features/agents-lab/agentsClient';
 import { isSafeReferenceHref } from '../src/features/knowledge-explorer/referenceSafety';
 
@@ -251,6 +253,234 @@ describe('runAgent', () => {
   ])('rejects a malformed 200 body (%s)', async (_, body) => {
     const { impl } = fakeFetch(200, body);
     expect(await runAgent(BASE, request, impl)).toMatchObject({ status: 'error', error: 'unexpected' });
+  });
+});
+
+/** A Server-Sent Event as Spring writes it. */
+const sse = (event: string, data: unknown) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+
+/** Fake fetch whose body is a stream of SSE frames; the writer controls the chunks. */
+function sseFetch(chunks: string[], status = 200) {
+  const calls: { url: string; init?: RequestInit }[] = [];
+  const impl = async (url: string, init?: RequestInit) => {
+    calls.push({ url, init });
+    const encoder = new TextEncoder();
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+          controller.close();
+        },
+      }),
+      { status, headers: { 'Content-Type': 'text/event-stream' } },
+    );
+  };
+  return { impl, calls };
+}
+
+describe('runAgentStreaming', () => {
+  it('reports every provider asked and returns the final answer', async () => {
+    const { impl, calls } = sseFetch([
+      sse('provider', { provider: 'GEMINI' }),
+      sse('provider', { provider: 'OLLAMA' }),
+      sse('done', {
+        response: '**Title**: [Login]',
+        agent: 'bug-report-analyst',
+        provider: 'OLLAMA',
+        model: 'gpt-oss:20b',
+        fallback: true,
+      }),
+    ]);
+    const progress: AgentProgress[] = [];
+    let clock = 1_000;
+    const now = () => (clock += 1_500);
+
+    const result = await runAgentStreaming(
+      BASE,
+      { ...request, provider: 'GEMINI' as const, model: 'gemini-flash-lite-latest' },
+      (step) => progress.push(step),
+      impl,
+      now,
+    );
+
+    // The first model asked is not a retry: the wording in the UI depends on this difference
+    expect(progress).toEqual([
+      { stage: 'provider', provider: 'GEMINI' },
+      { stage: 'retry', provider: 'OLLAMA' },
+    ]);
+    expect(result).toEqual({
+      status: 'ok',
+      response: '**Title**: [Login]',
+      agent: 'bug-report-analyst',
+      provider: 'OLLAMA',
+      model: 'gpt-oss:20b',
+      fallback: true,
+      latencyMs: 1_500,
+    });
+    expect(calls[0]?.url).toBe(`${BASE}/api/agents/bug-report-analyst/chat/stream`);
+    expect(calls[0]?.init?.method).toBe('POST');
+    // No Accept header: the backend must be free to answer a 404 as Problem+JSON
+    expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
+      message: 'Login fails',
+      locale: 'en',
+      provider: 'GEMINI',
+      model: 'gemini-flash-lite-latest',
+    });
+  });
+
+  it('reassembles a frame that arrives split across two chunks', async () => {
+    const { impl } = sseFetch([
+      'event: provider\ndata: {"prov',
+      'ider":"GEMINI"}\n\n',
+      sse('done', { response: 'ok', agent: 'bug-report-analyst', provider: 'GEMINI' }),
+    ]);
+    const progress: AgentProgress[] = [];
+
+    const result = await runAgentStreaming(BASE, request, (step) => progress.push(step), impl);
+
+    expect(progress).toEqual([{ stage: 'provider', provider: 'GEMINI' }]);
+    expect(result).toMatchObject({ status: 'ok', response: 'ok' });
+  });
+
+  it('ignores unknown events and providers it does not serve', async () => {
+    const { impl } = sseFetch([
+      sse('keep-alive', { at: 1 }),
+      sse('provider', { provider: 'GROQ' }),
+      sse('done', { response: 'ok', agent: 'bug-report-analyst', provider: 'GEMINI' }),
+    ]);
+    const progress: AgentProgress[] = [];
+
+    expect(await runAgentStreaming(BASE, request, (step) => progress.push(step), impl)).toMatchObject({
+      status: 'ok',
+    });
+    expect(progress).toEqual([]);
+  });
+
+  it('turns an error event into the matching result', async () => {
+    const { impl } = sseFetch([
+      sse('provider', { provider: 'GEMINI' }),
+      sse('error', { error: 'unavailable', detail: 'All LLM providers failed' }),
+    ]);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'unavailable',
+      detail: 'All LLM providers failed',
+    });
+  });
+
+  it('maps an unknown error code to unexpected', async () => {
+    const { impl } = sseFetch([sse('error', { error: 'teapot' })]);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'unexpected',
+    });
+  });
+
+  it('falls back to the plain endpoint when the backend has no streaming route', async () => {
+    const calls: string[] = [];
+    const impl = async (url: string) => {
+      calls.push(url);
+      if (url.endsWith('/chat/stream')) {
+        return new Response(JSON.stringify({ detail: 'No static resource' }), { status: 404 });
+      }
+      return new Response(JSON.stringify({ response: 'from the old endpoint', agent: 'bug-report-analyst', provider: 'GEMINI' }), {
+        status: 200,
+      });
+    };
+
+    const result = await runAgentStreaming(BASE, request, () => {}, impl);
+
+    expect(result).toMatchObject({ status: 'ok', response: 'from the old endpoint' });
+    expect(calls).toEqual([
+      `${BASE}/api/agents/bug-report-analyst/chat/stream`,
+      `${BASE}/api/agents/bug-report-analyst/chat`,
+    ]);
+  });
+
+  it('reports an unknown agent when the fallback answers 404 too', async () => {
+    // A real unknown agent is a 404 on BOTH routes: the retry costs one request and the
+    // visitor gets the honest message instead of a generic failure.
+    const calls: string[] = [];
+    const impl = async (url: string) => {
+      calls.push(url);
+      return new Response(JSON.stringify({ detail: 'Unknown agent: nope' }), { status: 404 });
+    };
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'unknown-agent',
+    });
+    expect(calls).toHaveLength(2);
+  });
+
+  it('does not spend the rate limit twice: a 429 is reported, not retried', async () => {
+    const { impl, calls } = sseFetch([], 429);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toMatchObject({
+      status: 'error',
+      error: 'rate-limited',
+    });
+    expect(calls).toHaveLength(1);
+  });
+
+  it.each([
+    [400, 'invalid-input'],
+    [503, 'unavailable'],
+    [500, 'unexpected'],
+  ])('maps HTTP %i to %s', async (status, error) => {
+    const { impl } = sseFetch([], status);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toMatchObject({ status: 'error', error });
+  });
+
+  it('reports a stream that ends before the answer', async () => {
+    const { impl } = sseFetch([sse('provider', { provider: 'GEMINI' })]);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toMatchObject({
+      status: 'error',
+      error: 'unexpected',
+    });
+  });
+
+  it('reports a malformed done event', async () => {
+    const { impl } = sseFetch([sse('done', { provider: 'GEMINI' })]);
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'unexpected',
+      detail: 'Malformed response',
+    });
+  });
+
+  it('reports an empty body as unexpected', async () => {
+    const impl = async () => new Response(null, { status: 200 });
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'unexpected',
+      detail: 'Empty stream',
+    });
+  });
+
+  it('maps a thrown fetch to network', async () => {
+    const impl = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+
+    expect(await runAgentStreaming(BASE, request, () => {}, impl)).toEqual({ status: 'error', error: 'network' });
+  });
+
+  it('does not call the backend without a URL or with invalid input', async () => {
+    const { impl, calls } = sseFetch([]);
+
+    expect(await runAgentStreaming(null, request, () => {}, impl)).toEqual({ status: 'error', error: 'not-configured' });
+    expect(await runAgentStreaming(BASE, { ...request, message: '   ' }, () => {}, impl)).toEqual({
+      status: 'error',
+      error: 'invalid-input',
+    });
+    expect(calls).toHaveLength(0);
   });
 });
 

@@ -57,6 +57,13 @@ export type AgentRunResult =
       retryAfterSeconds?: number;
     };
 
+/**
+ * What the run is doing right now, not what it produced: the answer still arrives in one piece
+ * so the backend keeps its provider fallback. "provider" is the first model asked, "retry" any
+ * model asked afterwards (a hedge after 5 s or a fallback after a failure).
+ */
+export type AgentProgress = { stage: "provider" | "retry"; provider: LabProvider };
+
 export type BackendHealth = "online" | "degraded" | "offline" | "not-configured";
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -95,6 +102,62 @@ export function isLabProvider(value: unknown): value is LabProvider {
   return (LAB_PROVIDERS as readonly unknown[]).includes(value);
 }
 
+/** Same shape the backend sends on both endpoints, so both endpoints parse it the same way. */
+type RawAnswer = {
+  response?: unknown;
+  agent?: unknown;
+  provider?: unknown;
+  model?: unknown;
+  fallback?: unknown;
+};
+
+function answerFrom(
+  body: RawAnswer | null,
+  request: AgentRunRequest,
+  started: number,
+  now: () => number,
+): AgentRunResult {
+  const text = body?.response;
+  const provider = body?.provider;
+  // Never trust the response shape blindly, even from our own backend
+  if (typeof text !== "string" || !isLabProvider(provider)) {
+    return { status: "error", error: "unexpected", detail: "Malformed response" };
+  }
+  const rawModel = body?.model;
+  const model = typeof rawModel === "string" ? rawModel.trim() : "";
+  const answer = {
+    status: "ok" as const,
+    response: text,
+    agent: String(body?.agent ?? request.agentId),
+    provider,
+    fallback: body?.fallback === true,
+    latencyMs: Math.max(0, Math.round(now() - started)),
+  };
+  // Only present when the backend actually named a model: the UI hides the chip otherwise
+  return model ? { ...answer, model } : answer;
+}
+
+async function errorForResponse(response: Response): Promise<AgentRunResult> {
+  switch (response.status) {
+    case 400:
+      return { status: "error", error: "invalid-input", detail: await problemDetail(response) };
+    case 404:
+      return { status: "error", error: "unknown-agent" };
+    case 429: {
+      const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "", 10);
+      return {
+        status: "error",
+        error: "rate-limited",
+        retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : undefined,
+      };
+    }
+    case 503:
+      return { status: "error", error: "unavailable" };
+    default:
+      return { status: "error", error: "unexpected", detail: `HTTP ${response.status}` };
+  }
+}
+
 export async function runAgent(
   baseUrl: string | null,
   request: AgentRunRequest,
@@ -123,47 +186,156 @@ export async function runAgent(
     return { status: "error", error: "network" };
   }
 
-  switch (response.status) {
-    case 200:
-      break;
-    case 400:
-      return { status: "error", error: "invalid-input", detail: await problemDetail(response) };
-    case 404:
-      return { status: "error", error: "unknown-agent" };
-    case 429: {
-      const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "", 10);
-      return {
-        status: "error",
-        error: "rate-limited",
-        retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : undefined,
-      };
-    }
-    case 503:
-      return { status: "error", error: "unavailable" };
-    default:
-      return { status: "error", error: "unexpected", detail: `HTTP ${response.status}` };
-  }
+  if (response.status !== 200) return errorForResponse(response);
 
   try {
-    const body = await response.json();
-    // Never trust the response shape blindly, even from our own backend
-    if (typeof body?.response !== "string" || !isLabProvider(body?.provider)) {
-      return { status: "error", error: "unexpected", detail: "Malformed response" };
-    }
-    const model = typeof body.model === "string" ? body.model.trim() : "";
-    const answer = {
-      status: "ok" as const,
-      response: body.response,
-      agent: String(body.agent ?? request.agentId),
-      provider: body.provider,
-      fallback: body.fallback === true,
-      latencyMs: Math.max(0, Math.round(now() - started)),
-    };
-    // Only present when the backend actually named a model: the UI hides the chip otherwise
-    return model ? { ...answer, model } : answer;
+    return answerFrom((await response.json()) as RawAnswer | null, request, started, now);
   } catch {
     return { status: "error", error: "unexpected", detail: "Invalid JSON" };
   }
+}
+
+interface SseFrame {
+  event: string;
+  data: string;
+}
+
+/**
+ * Splits what has arrived into complete SSE frames and keeps the incomplete tail.
+ *
+ * A frame is a blank-line-terminated block of "event:" / "data:" lines. The tail matters:
+ * a chunk boundary can land in the middle of a JSON payload, and parsing it early would
+ * drop a real event.
+ */
+function parseSseFrames(buffer: string): { frames: SseFrame[]; rest: string } {
+  const blocks = buffer.replace(/\r\n/g, "\n").split("\n\n");
+  const rest = blocks.pop() ?? "";
+  const frames: SseFrame[] = [];
+  for (const block of blocks) {
+    let event = "message";
+    const data: string[] = [];
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event:")) event = line.slice("event:".length).trim();
+      else if (line.startsWith("data:")) data.push(line.slice("data:".length).replace(/^ /, ""));
+    }
+    // A keep-alive comment or an empty block produces no frame
+    if (data.length > 0) frames.push({ event, data: data.join("\n") });
+  }
+  return { frames, rest };
+}
+
+function jsonOrNull(text: string): Record<string, unknown> | null {
+  try {
+    const value: unknown = JSON.parse(text);
+    return value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+const STREAM_ERRORS: readonly AgentRunError[] = [
+  "invalid-input",
+  "unknown-agent",
+  "rate-limited",
+  "unavailable",
+  "network",
+  "unexpected",
+];
+
+function errorFromStream(body: Record<string, unknown> | null): AgentRunResult {
+  // Locals on purpose: the code has to be read twice (check, then cast) and this keeps the
+  // narrowing obvious instead of relying on how TS treats `body?.error` in a compound condition.
+  const rawError = body?.error;
+  const error =
+    typeof rawError === "string" && (STREAM_ERRORS as readonly string[]).includes(rawError)
+      ? (rawError as AgentRunError)
+      : "unexpected";
+  const rawDetail = body?.detail;
+  const detail = typeof rawDetail === "string" ? rawDetail : undefined;
+  return detail ? { status: "error", error, detail } : { status: "error", error };
+}
+
+/**
+ * Same as {@link runAgent}, plus a callback for each provider the backend asks.
+ *
+ * Uses fetch with a hand-written SSE reader instead of EventSource: EventSource cannot POST.
+ * The progress is cosmetic, so a broken stream never changes the final answer; and a backend
+ * deployed before this endpoint existed (404/405/415) falls back to the plain one instead of
+ * showing the visitor an error it does not have.
+ */
+export async function runAgentStreaming(
+  baseUrl: string | null,
+  request: AgentRunRequest,
+  onProgress: (progress: AgentProgress) => void = () => {},
+  fetchImpl: FetchLike = fetch,
+  now: () => number = () => Date.now(),
+): Promise<AgentRunResult> {
+  if (!baseUrl) return { status: "error", error: "not-configured" };
+
+  const message = request.message.trim();
+  if (!message || message.length > MAX_MESSAGE_LENGTH) {
+    return { status: "error", error: "invalid-input" };
+  }
+
+  const started = now();
+  const model = request.provider ? request.model?.trim() || undefined : undefined;
+  let response: Response;
+  try {
+    response = await fetchImpl(`${baseUrl}/api/agents/${encodeURIComponent(request.agentId)}/chat/stream`, {
+      method: "POST",
+      // No Accept header on purpose: an unknown agent answers 404 as Problem+JSON, and asking
+      // only for text/event-stream would turn that honest 404 into a 406.
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, locale: request.locale, provider: request.provider, model }),
+      signal: timeoutSignal(RUN_TIMEOUT_MS),
+    });
+  } catch {
+    return { status: "error", error: "network" };
+  }
+
+  // An older backend has no streaming route: use the endpoint it does have
+  if (response.status === 404 || response.status === 405 || response.status === 415) {
+    return runAgent(baseUrl, request, fetchImpl, now);
+  }
+  if (response.status !== 200) return errorForResponse(response);
+  if (!response.body) return { status: "error", error: "unexpected", detail: "Empty stream" };
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let providers = 0;
+  let outcome: AgentRunResult | undefined;
+
+  try {
+    while (!outcome) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parsed = parseSseFrames(buffer);
+      buffer = parsed.rest;
+      for (const frame of parsed.frames) {
+        if (frame.event === "provider") {
+          const provider = jsonOrNull(frame.data)?.provider;
+          if (isLabProvider(provider)) {
+            onProgress({ stage: providers === 0 ? "provider" : "retry", provider });
+            providers += 1;
+          }
+        } else if (frame.event === "done") {
+          outcome = answerFrom(jsonOrNull(frame.data) as RawAnswer | null, request, started, now);
+        } else if (frame.event === "error") {
+          outcome = errorFromStream(jsonOrNull(frame.data));
+        }
+      }
+    }
+  } catch {
+    // Timeout mid-stream, the host dropped the connection, a body that is not a stream...
+    return { status: "error", error: "network" };
+  } finally {
+    // We already have the answer: stop the request instead of leaving it half-open
+    void reader.cancel().catch(() => {});
+  }
+
+  return outcome ?? { status: "error", error: "unexpected", detail: "The stream ended before the answer" };
 }
 
 export async function checkHealth(baseUrl: string | null, fetchImpl: FetchLike = fetch): Promise<BackendHealth> {
