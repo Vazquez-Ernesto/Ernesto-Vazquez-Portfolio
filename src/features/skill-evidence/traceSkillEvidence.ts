@@ -463,8 +463,8 @@ const evidenceBySkill: Record<string, CuratedNode[]> = {
   ],
   "SOAP Web Services": [
     job(CFOTECH, {
-      en: "Rating regression over Huawei CBS SOAP web services, validated against the XSD.",
-      es: "Regresión de Tasación sobre Web Services SOAP de CBS Huawei, validados contra el XSD.",
+      en: "Regression suites over SOAP web services, validated against the XSD.",
+      es: "Suites de regresión sobre Web Services SOAP, validados contra el XSD.",
     }),
   ],
   "PostgreSQL + pgvector": [
@@ -493,8 +493,8 @@ const evidenceBySkill: Record<string, CuratedNode[]> = {
   ],
   "Tool Calling": [
     job(CFOTECH, {
-      en: "Agents with 47 tools (SSH, CDR patching, Jira, Xray) and risk-based confirmations.",
-      es: "Agentes con 47 herramientas (SSH, parcheo de CDRs, Jira, Xray) y confirmaciones según riesgo.",
+      en: "QA agents calling tools over test environments and issue tracking, with risk-based confirmations.",
+      es: "Agentes de QA que llaman herramientas sobre entornos de prueba y gestión de incidencias, con confirmaciones según riesgo.",
     }),
   ],
   "Prompt Engineering": [
