@@ -1,0 +1,254 @@
+---
+import Tag from './ui/Tag.astro';
+import { certifications } from '../data/certifications';
+import { cvAreas, getCvExtras, getCvProjects, getCvSkillGroups } from '../data/cv';
+import { getExperience, getProfile } from '../i18n/content';
+import { cvPath, homePath, otherLocale, type Locale } from '../i18n/locale';
+import { ui } from '../i18n/ui';
+import { traceSkillEvidence } from '../features/skill-evidence/traceSkillEvidence';
+import type { SkillTraceResult } from '../features/skill-evidence/types';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = ui[locale];
+const profile = getProfile(locale);
+const experience = getExperience(locale);
+const skillGroups = getCvSkillGroups(locale);
+const projects = getCvProjects(locale);
+const extras = getCvExtras(locale);
+const home = homePath(locale);
+
+// Pre-trace every skill at build time; home anchors are rewritten so they work from /cv.
+const traces: Record<string, SkillTraceResult> = {};
+for (const item of skillGroups.flatMap((group) => group.items)) {
+  const result = traceSkillEvidence({ skill: item, locale });
+  traces[item] = {
+    ...result,
+    evidence: result.evidence.map((node) => ({
+      ...node,
+      href: node.href?.startsWith("#") ? `${home}${node.href}` : node.href,
+    })),
+  };
+}
+
+const sectionTitle = "text-sm font-semibold uppercase tracking-widest text-brand-green border-b border-brand-green/40 pb-1 mb-4";
+const externalLink = { target: "_blank", rel: "noopener noreferrer" };
+---
+
+<div class="cv-root max-w-4xl mx-auto px-6 py-10">
+  <!-- Toolbar -->
+  <nav class="cv-no-print flex flex-wrap items-center justify-between gap-3 mb-8 text-sm">
+    <a href={home} class="text-brand-muted hover:text-brand-green transition-colors">{t.cv.back}</a>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href={profile.cvUrl} download class="px-3 py-1.5 rounded-lg border border-brand-border text-brand-muted hover:border-brand-green hover:text-brand-green transition-colors">{t.cv.downloadPdf}</a>
+      <button type="button" id="cv-print" class="px-3 py-1.5 rounded-lg bg-brand-green text-brand-bg font-semibold hover:bg-brand-green-dark transition-colors">{t.cv.print}</button>
+      <a href={cvPath(otherLocale(locale))} class="px-3 py-1.5 rounded-lg border border-brand-border text-brand-muted hover:text-brand-green transition-colors">{t.cv.switchLabel}</a>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-brand-text">{profile.name}</h1>
+    <p class="text-lg text-brand-green font-medium mt-1">{profile.title}</p>
+    <p class="text-sm text-brand-muted mt-2">
+      {profile.location} · <a href={`mailto:${profile.email}`} class="hover:text-brand-green">{profile.email}</a> · {profile.phone}
+    </p>
+    <p class="text-sm mt-1 flex flex-wrap gap-x-3">
+      {profile.socials.map((social) => (
+        <a href={social.url} {...externalLink} class="text-brand-green hover:underline">{social.platform}</a>
+      ))}
+    </p>
+  </header>
+
+  <!-- Focus filter -->
+  <div class="cv-no-print mb-10 p-4 rounded-xl border border-brand-border bg-brand-card">
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label={t.cv.filterLabel}>
+      <span class="text-xs uppercase tracking-wider text-brand-muted mr-1">{t.cv.filterLabel}</span>
+      {(["all", ...cvAreas] as const).map((area) => (
+        <button
+          type="button"
+          data-filter={area}
+          aria-pressed={area === "all" ? "true" : "false"}
+          class="cv-filter px-3 py-1.5 text-xs rounded-full border border-brand-border text-brand-muted hover:border-brand-green hover:text-brand-green aria-pressed:border-brand-green aria-pressed:text-brand-green aria-pressed:bg-brand-green/10 transition-colors"
+        >
+          {t.cv.areas[area]}
+        </button>
+      ))}
+    </div>
+    <p class="text-xs text-brand-muted mt-3">{t.cv.tailorHint}</p>
+  </div>
+
+  <!-- Summary -->
+  <section class="mb-10">
+    <h2 class={sectionTitle}>{t.cv.sections.summary}</h2>
+    {profile.bio.split("\n\n").map((paragraph) => (
+      <p class="text-sm leading-relaxed text-brand-text/90 mb-3">{paragraph}</p>
+    ))}
+  </section>
+
+  <!-- Experience -->
+  <section class="mb-10">
+    <h2 class={sectionTitle}>{t.cv.sections.experience}</h2>
+    <div class="space-y-6">
+      {experience.map((job) => (
+        <article class="cv-avoid-break">
+          <h3 class="font-semibold text-brand-text">{job.role} — {job.company}</h3>
+          <p class="text-xs text-brand-muted mt-0.5">{job.contractType} · {job.period} · {job.location}</p>
+          <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-brand-text/90">
+            {job.responsibilities.map((item) => <li>{item}</li>)}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- Skills -->
+  <section class="mb-10">
+    <h2 class={sectionTitle}>{t.cv.sections.skills}</h2>
+    <p class="cv-no-print text-xs text-brand-muted mb-4">{t.cv.skillsHint}</p>
+    <div class="space-y-3">
+      {skillGroups.map((group) => (
+        <div data-areas={group.areas.join(" ")} class="cv-filterable grid md:grid-cols-[200px_1fr] gap-2 items-start">
+          <h3 class="text-sm font-semibold text-brand-text">{group.category}</h3>
+          <div class="flex flex-wrap gap-1.5">
+            {group.items.map((item) => (
+              <button
+                type="button"
+                data-skill={item}
+                aria-pressed="false"
+                class="cv-skill px-2.5 py-1 text-xs rounded border border-brand-border text-brand-muted hover:border-brand-green hover:text-brand-green aria-pressed:border-brand-green aria-pressed:text-brand-green transition-colors"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+    <div id="cv-evidence" class="cv-no-print mt-5" aria-live="polite"></div>
+  </section>
+
+  <!-- Projects -->
+  <section class="mb-10">
+    <h2 class={sectionTitle}>{t.cv.sections.projects}</h2>
+    <div class="space-y-5">
+      {projects.map((project) => (
+        <article data-areas={project.areas.join(" ")} class="cv-filterable cv-avoid-break">
+          <h3 class="font-semibold text-brand-text">
+            {project.live ? <a href={project.live} {...externalLink} class="hover:text-brand-green">{project.title}</a> : project.title}
+            {project.github && <a href={project.github} {...externalLink} class="ml-2 text-xs font-normal text-brand-green hover:underline">GitHub</a>}
+          </h3>
+          <p class="text-sm text-brand-text/90 mt-1">{project.description}</p>
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            {project.technologies.map((tech) => <Tag label={tech} />)}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- AI practices -->
+  <section data-areas="ai" class="cv-filterable mb-10">
+    <h2 class={sectionTitle}>{t.cv.sections.practices}</h2>
+    <ul class="space-y-2 text-sm text-brand-text/90">
+      {extras.practices.map((practice) => (
+        <li><strong class="text-brand-text">{practice.title}:</strong> {practice.body}</li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- Education, certifications, languages -->
+  <section class="grid md:grid-cols-3 gap-8 cv-avoid-break">
+    <div>
+      <h2 class={sectionTitle}>{t.cv.sections.education}</h2>
+      <ul class="space-y-1 text-sm text-brand-text/90">{extras.education.map((item) => <li>{item}</li>)}</ul>
+    </div>
+    <div>
+      <h2 class={sectionTitle}>{t.cv.sections.certifications}</h2>
+      <ul class="space-y-1 text-sm text-brand-text/90">
+        {certifications.map((cert) => <li>{cert.name} — {cert.issuer}</li>)}
+      </ul>
+    </div>
+    <div>
+      <h2 class={sectionTitle}>{t.cv.sections.languages}</h2>
+      <ul class="space-y-1 text-sm text-brand-text/90">{extras.languages.map((item) => <li>{item}</li>)}</ul>
+    </div>
+  </section>
+</div>
+
+<style is:global>
+  .cv-filterable[hidden] { display: none !important; }
+
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    body { background: #fff !important; color: #111 !important; font-size: 10pt; }
+    .cv-no-print { display: none !important; }
+    .cv-root { max-width: none; padding: 0; }
+    .cv-root * { color: #111 !important; background: transparent !important; border-color: #cfcfcf !important; }
+    .cv-root h2 { color: #0f3d2e !important; border-color: #1f7a55 !important; }
+    .cv-root a { text-decoration: none; }
+    .cv-root button { border: none; padding: 0; }
+    .cv-avoid-break { break-inside: avoid; }
+  }
+</style>
+
+<script
+  define:vars={{
+    tracesJson: JSON.stringify(traces),
+    evidenceTitle: t.cv.evidenceTitle,
+    untracedTitle: t.evidence.untracedTitle,
+    untracedBody: t.evidence.untracedBody,
+  }}
+>
+  const traces = JSON.parse(tracesJson);
+  const panel = document.getElementById("cv-evidence");
+  const filters = document.querySelectorAll(".cv-filter");
+  const filterables = document.querySelectorAll(".cv-filterable");
+  const skillButtons = document.querySelectorAll(".cv-skill");
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function applyFilter(area) {
+    filters.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.filter === area)));
+    filterables.forEach((element) => {
+      const areas = (element.dataset.areas || "").split(" ");
+      element.hidden = area !== "all" && !areas.includes(area);
+    });
+  }
+
+  function evidenceItem(node) {
+    const external = node.href && node.href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : "";
+    const body = `<span class="font-medium text-brand-text">${escapeHtml(node.label)}</span>
+      <span class="ml-2 text-[10px] font-bold ${node.maturity === "H2" ? "text-brand-green" : "text-brand-muted"}">${node.maturity}</span>
+      <span class="block text-xs text-brand-muted mt-0.5">${escapeHtml(node.detail)}</span>`;
+    return node.href
+      ? `<li><a href="${escapeHtml(node.href)}"${external} class="block p-3 rounded-lg border border-brand-border hover:border-brand-green/50">${body}</a></li>`
+      : `<li class="p-3 rounded-lg border border-brand-border">${body}</li>`;
+  }
+
+  function showEvidence(skill) {
+    const result = traces[skill];
+    skillButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.skill === skill)));
+    if (!result || result.status !== "traced") {
+      panel.innerHTML = `<div class="p-4 rounded-xl border border-dashed border-brand-border">
+        <p class="font-semibold text-brand-text text-sm">${escapeHtml(untracedTitle)}</p>
+        <p class="text-xs text-brand-muted mt-1">${escapeHtml(untracedBody)}</p></div>`;
+      return;
+    }
+    panel.innerHTML = `<p class="text-xs uppercase tracking-wider text-brand-muted mb-2">${escapeHtml(evidenceTitle)} ${escapeHtml(result.skill)}</p>
+      <ul class="grid md:grid-cols-2 gap-2">${result.evidence.map(evidenceItem).join("")}</ul>`;
+  }
+
+  filters.forEach((button) => button.addEventListener("click", () => applyFilter(button.dataset.filter)));
+  skillButtons.forEach((button) => button.addEventListener("click", () => showEvidence(button.dataset.skill)));
+  document.getElementById("cv-print")?.addEventListener("click", () => window.print());
+</script>

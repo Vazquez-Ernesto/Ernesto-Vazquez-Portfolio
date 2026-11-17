@@ -13,3 +13,7 @@ export function otherLocale(locale: Locale): Locale {
 export function homePath(locale: Locale): string {
   return locale === "es" ? "/es/" : "/";
 }
+
+export function cvPath(locale: Locale): string {
+  return `${homePath(locale)}cv/`;
+}

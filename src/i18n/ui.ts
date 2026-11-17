@@ -137,6 +137,29 @@ export interface UiStrings {
   footer: {
     builtWith: string;
   };
+  cv: {
+    metaTitle: string;
+    metaDescription: string;
+    back: string;
+    downloadPdf: string;
+    print: string;
+    switchLabel: string;
+    filterLabel: string;
+    areas: { all: string; qa: string; ai: string; software: string };
+    sections: {
+      summary: string;
+      experience: string;
+      skills: string;
+      projects: string;
+      practices: string;
+      education: string;
+      certifications: string;
+      languages: string;
+    };
+    skillsHint: string;
+    evidenceTitle: string;
+    tailorHint: string;
+  };
 }
 
 const en: UiStrings = {
@@ -154,7 +177,7 @@ const en: UiStrings = {
     knowledge: "Knowledge",
     agents: "Agents",
     contact: "Contact",
-    resume: "Resume ↓",
+    resume: "Resume",
     menuLabel: "Toggle navigation menu",
     switchLabel: "ES",
     switchAria: "Cambiar a español",
@@ -300,6 +323,30 @@ const en: UiStrings = {
   footer: {
     builtWith: "Built with Astro.",
   },
+  cv: {
+    metaTitle: "Resume — Ernesto Vázquez · QA Automation Engineer / SDET",
+    metaDescription:
+      "Interactive resume of Ernesto Vázquez: QA automation for banking and telecom, LLM agents for QA, and the evidence behind every skill.",
+    back: "← Portfolio",
+    downloadPdf: "Download PDF",
+    print: "Print / Save as PDF",
+    switchLabel: "ES",
+    filterLabel: "Focus",
+    areas: { all: "Everything", qa: "QA Automation", ai: "AI Engineering", software: "Software & DevOps" },
+    sections: {
+      summary: "Summary",
+      experience: "Experience",
+      skills: "Technical Skills",
+      projects: "Selected Projects",
+      practices: "AI Engineering Practices",
+      education: "Education",
+      certifications: "Certifications",
+      languages: "Languages",
+    },
+    skillsHint: "Click a skill to see the evidence behind it.",
+    evidenceTitle: "Evidence for",
+    tailorHint: "Pick a focus before printing to get a resume tailored to the role.",
+  },
 };
 
 const es: UiStrings = {
@@ -317,7 +364,7 @@ const es: UiStrings = {
     knowledge: "Conocimiento",
     agents: "Agentes",
     contact: "Contacto",
-    resume: "CV ↓",
+    resume: "CV",
     menuLabel: "Abrir o cerrar el menú de navegación",
     switchLabel: "EN",
     switchAria: "Switch to English",
@@ -462,6 +509,30 @@ const es: UiStrings = {
   },
   footer: {
     builtWith: "Hecho con Astro.",
+  },
+  cv: {
+    metaTitle: "CV — Ernesto Vázquez · QA Automation Engineer / SDET",
+    metaDescription:
+      "CV interactivo de Ernesto Vázquez: automatización QA para banca y telecom, agentes LLM para QA y la evidencia detrás de cada habilidad.",
+    back: "← Portfolio",
+    downloadPdf: "Descargar PDF",
+    print: "Imprimir / Guardar PDF",
+    switchLabel: "EN",
+    filterLabel: "Enfoque",
+    areas: { all: "Todo", qa: "QA Automation", ai: "Ingeniería con IA", software: "Software y DevOps" },
+    sections: {
+      summary: "Perfil",
+      experience: "Experiencia",
+      skills: "Stack técnico",
+      projects: "Proyectos destacados",
+      practices: "Ingeniería con IA",
+      education: "Educación",
+      certifications: "Certificaciones",
+      languages: "Idiomas",
+    },
+    skillsHint: "Tocá una habilidad para ver la evidencia que la respalda.",
+    evidenceTitle: "Evidencia de",
+    tailorHint: "Elegí un enfoque antes de imprimir para obtener un CV a medida del puesto.",
   },
 };
 

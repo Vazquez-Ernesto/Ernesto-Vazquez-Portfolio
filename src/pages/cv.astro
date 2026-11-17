@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CvPage from '../components/CvPage.astro';
+import { ui } from '../i18n/ui';
+
+const locale = "en";
+const t = ui[locale];
+---
+
+<BaseLayout title={t.cv.metaTitle} description={t.cv.metaDescription} lang={locale}>
+  <main>
+    <CvPage locale={locale} />
+  </main>
+</BaseLayout>

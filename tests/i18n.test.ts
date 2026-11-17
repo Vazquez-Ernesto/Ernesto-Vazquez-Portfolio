@@ -8,7 +8,7 @@ import {
   getProjects,
   getSkillGroups,
 } from '../src/i18n/content';
-import { homePath, otherLocale } from '../src/i18n/locale';
+import { cvPath, homePath, otherLocale } from '../src/i18n/locale';
 import { ui, type UiStrings } from '../src/i18n/ui';
 
 /** Recursively collects the key paths of an object for parity checks. */
@@ -26,6 +26,11 @@ describe('i18n routing helpers', () => {
   it('maps locales to home paths', () => {
     expect(homePath('en')).toBe('/');
     expect(homePath('es')).toBe('/es/');
+  });
+
+  it('maps locales to CV paths', () => {
+    expect(cvPath('en')).toBe('/cv/');
+    expect(cvPath('es')).toBe('/es/cv/');
   });
 
   it('computes the opposite locale', () => {
