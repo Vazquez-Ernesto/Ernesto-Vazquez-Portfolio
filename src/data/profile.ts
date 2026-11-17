@@ -28,7 +28,7 @@ export const profile: Profile = {
   location: "Buenos Aires, CABA, Argentina",
   email: "ernestoalexisvazquez@gmail.com",
   phone: "+54 3704824222",
-  bio: `QA Automation Engineer with 5+ years in banking and telecom, specialized in automating mission-critical backend systems: CDR mediation and rating, SOAP/REST web services, batch processes and CI/CD pipelines. I build Java + Cucumber frameworks that run against real servers over SSH/SFTP and databases, with automatic evidence and reporting to Jira Xray. About 80% of the Mediation and Rating regression I work on now runs automated.
+  bio: `QA Automation Engineer with 5+ years in banking and telecom, specialized in automating mission-critical backend systems: web services, batch processes and CI/CD pipelines. I build Java + Cucumber frameworks that run against real environments, collect evidence and report results automatically.
 
 I also design and ship LLM agents for QA to production: multi-agent backends in Java 21 + Spring Boot, multi-provider LLM routers with failover, and evaluation suites (evals). The QA Agents Lab on this site is one of them, running live.
 

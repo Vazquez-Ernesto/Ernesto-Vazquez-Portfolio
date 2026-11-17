@@ -27,7 +27,7 @@ const profileEs: ProfileEsOverlay = {
     "Fundador @ QAdvanced",
     "Agentes LLM para QA en Java",
   ],
-  bio: `QA Automation Engineer con más de 5 años en banca y telecomunicaciones, especializado en automatizar sistemas críticos de backend: mediación y tasación de CDRs, Web Services SOAP/REST, procesos batch y pipelines CI/CD. Construyo frameworks en Java + Cucumber que ejecutan contra servidores reales vía SSH/SFTP y bases de datos, con evidencia y reporte automático a Jira Xray. Hoy cerca del 80 % de la regresión de Mediación y Tasación en la que trabajo corre automatizada.
+  bio: `QA Automation Engineer con más de 5 años en banca y telecomunicaciones, especializado en automatizar sistemas críticos de backend: servicios web, procesos batch y pipelines CI/CD. Construyo frameworks en Java + Cucumber que ejecutan contra entornos reales, generan evidencia y reportan resultados de forma automática.
 
 En paralelo diseño y pongo en producción agentes LLM aplicados a QA: backends multi-agente en Java 21 + Spring Boot, routers multi-proveedor con failover y suites de evaluación (evals). El QA Agents Lab de este sitio es uno de ellos, funcionando en vivo.
 
