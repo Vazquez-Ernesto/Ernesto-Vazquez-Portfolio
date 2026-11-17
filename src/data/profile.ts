@@ -19,20 +19,20 @@ export interface Profile {
 
 export const profile: Profile = {
   name: "Ernesto Alexis Vázquez",
-  title: "QA Automation Engineer & Full Stack Developer with AI",
+  title: "QA Automation Engineer / SDET · AI Quality Engineering",
   roles: [
-    "QA Engineer @ CFOTech IT Global Services",
+    "QA Automation + AI Engineer @ CFOTech IT Global Services",
     "Founder @ QAdvanced",
-    "Full Stack Developer with AI",
+    "LLM Agents for QA in Java",
   ],
   location: "Buenos Aires, CABA, Argentina",
   email: "ernestoalexisvazquez@gmail.com",
   phone: "+54 3704824222",
-  bio: `QA Engineer specialized in automation, with a focus on complex systems and end-to-end flows in production environments. With over 5 years of experience in banking and telecommunications, I design and implement automated testing solutions that reduce regression time and improve the reliability of critical systems.
+  bio: `QA Automation Engineer with 5+ years in banking and telecom, specialized in automating mission-critical backend systems: CDR mediation and rating, SOAP/REST web services, batch processes and CI/CD pipelines. I build Java + Cucumber frameworks that run against real servers over SSH/SFTP and databases, with automatic evidence and reporting to Jira Xray. About 80% of the Mediation and Rating regression I work on now runs automated.
 
-I primarily work with Java, Selenium, Cypress, and Playwright, integrating tests across UI, APIs, and batch processes. In my daily work, I automate real-world workflows that include remote execution via SSH, CDR file validation, data processing, and pipeline control within CI/CD environments.
+I also design and ship LLM agents for QA to production: multi-agent backends in Java 21 + Spring Boot, multi-provider LLM routers with failover, and evaluation suites (evals). The QA Agents Lab on this site is one of them, running live.
 
-Beyond tools, my approach is centered on understanding the business and building quality solutions that truly deliver value — not just increasing test coverage. Currently exploring how to apply AI in QA: test scenario generation, automated result analysis, and faster debugging processes.`,
+I use AI-assisted development with discipline: Spec-Driven Development, strict TDD and persistent memory across sessions. Beyond tools, my approach starts from understanding the business and building quality that delivers value — not just more test coverage.`,
   availability: "Open to opportunities",
   socials: [
     {

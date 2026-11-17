@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { projects } from '../src/data/projects';
 import { skills } from '../src/data/skills';
 import { traceSkillEvidence } from '../src/features/skill-evidence/traceSkillEvidence';
 import { isSafeReferenceHref } from '../src/features/knowledge-explorer/referenceSafety';
@@ -55,6 +56,26 @@ describe('TraceSkillEvidence', () => {
         expect(['traced', 'untraced']).toContain(result.status);
         if (result.status === 'untraced') expect(result.evidence).toEqual([]);
       }
+    }
+  });
+
+  it('links project evidence only to projects in the public catalog', () => {
+    const projectIds = new Set(projects.map((project) => project.id));
+    for (const group of skills) {
+      for (const item of group.items) {
+        for (const node of traceSkillEvidence({ skill: item }).evidence) {
+          if (node.kind === 'project') expect(projectIds).toContain(node.id);
+        }
+      }
+    }
+  });
+
+  it('backs the live AI skills with the QA Agents Lab', () => {
+    for (const skill of ['Multi-provider LLM Routing', 'LLM Evals (LLM-as-judge)', 'Prompt Engineering']) {
+      const result = traceSkillEvidence({ skill });
+      expect(result.status).toBe('traced');
+      expect(result.category).toBe('AI in QA');
+      expect(result.evidence.some((node) => node.id === 'qa-agents-lab' && node.href === '#agents')).toBe(true);
     }
   });
 

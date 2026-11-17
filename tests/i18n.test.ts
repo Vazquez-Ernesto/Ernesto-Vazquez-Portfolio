@@ -60,6 +60,11 @@ describe('UI strings parity', () => {
 });
 
 describe('content overlays', () => {
+  it('serves the CV PDF in the visitor language', () => {
+    expect(getProfile('en').cvUrl).toBe('/Cv.pdf');
+    expect(getProfile('es').cvUrl).toBe('/Cv-es.pdf');
+  });
+
   it('returns canonical data for English', () => {
     expect(getProfile('en').bio).not.toContain('automatización, con foco');
     expect(getExperience('en')).toEqual(experience);

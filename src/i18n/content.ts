@@ -17,21 +17,23 @@ interface ProfileEsOverlay {
   roles: string[];
   bio: string;
   availability: string;
+  cvUrl: string;
 }
 
 const profileEs: ProfileEsOverlay = {
-  title: "QA Automation Engineer & Full Stack Developer con IA",
+  title: "QA Automation Engineer / SDET · Ingeniería de Calidad con IA",
   roles: [
-    "QA Engineer @ CFOTech IT Global Services",
+    "QA Automation + IA @ CFOTech IT Global Services",
     "Fundador @ QAdvanced",
-    "Full Stack Developer con IA",
+    "Agentes LLM para QA en Java",
   ],
-  bio: `QA Engineer especializado en automatización, con foco en sistemas complejos y flujos end-to-end en entornos productivos. Con más de 5 años de experiencia en banca y telecomunicaciones, diseño e implemento soluciones de testing automatizado que reducen los tiempos de regresión y mejoran la confiabilidad de sistemas críticos.
+  bio: `QA Automation Engineer con más de 5 años en banca y telecomunicaciones, especializado en automatizar sistemas críticos de backend: mediación y tasación de CDRs, Web Services SOAP/REST, procesos batch y pipelines CI/CD. Construyo frameworks en Java + Cucumber que ejecutan contra servidores reales vía SSH/SFTP y bases de datos, con evidencia y reporte automático a Jira Xray. Hoy cerca del 80 % de la regresión de Mediación y Tasación en la que trabajo corre automatizada.
 
-Trabajo principalmente con Java, Selenium, Cypress y Playwright, integrando pruebas sobre UI, APIs y procesos batch. En el día a día automatizo flujos reales que incluyen ejecución remota por SSH, validación de archivos CDR, procesamiento de datos y control de pipelines en entornos de CI/CD.
+En paralelo diseño y pongo en producción agentes LLM aplicados a QA: backends multi-agente en Java 21 + Spring Boot, routers multi-proveedor con failover y suites de evaluación (evals). El QA Agents Lab de este sitio es uno de ellos, funcionando en vivo.
 
-Más allá de las herramientas, mi enfoque parte de entender el negocio y construir soluciones de calidad que realmente aporten valor — no solo aumentar la cobertura de pruebas. Actualmente exploro cómo aplicar IA en QA: generación de escenarios de prueba, análisis automatizado de resultados y procesos de depuración más rápidos.`,
+Trabajo con desarrollo asistido por IA de forma disciplinada: Spec-Driven Development, TDD estricto y memoria persistente entre sesiones. Más allá de las herramientas, mi enfoque parte de entender el negocio y construir calidad que aporte valor — no solo más cobertura.`,
   availability: "Abierto a oportunidades",
+  cvUrl: "/Cv-es.pdf",
 };
 
 type ExperienceEsOverlay = Pick<
@@ -41,18 +43,19 @@ type ExperienceEsOverlay = Pick<
 
 const experienceEs: Record<string, ExperienceEsOverlay> = {
   "CFOTech IT Global Services": {
-    role: "Quality Engineering",
-    contractType: "Cliente: Personal (Telecom Argentina)",
+    role: "QA Automation + IA",
+    contractType: "Cliente: Personal (Telecom Argentina) — equipos de Mediación y Tasación",
     period: "Jun 2025 – Actualidad",
     description:
-      "Responsable de garantizar la calidad funcional y técnica de una aplicación core de tasación y mediación dentro del ecosistema de Telecom Argentina, validando procesos críticos de procesamiento y tasación de CDRs.",
+      "Automatización de pruebas y agentes de IA para los equipos de QA de Mediación y Tasación de Telecom Argentina: procesamiento de CDRs, Web Services de CBS Huawei, procesos batch y pipelines de Jenkins. Hoy cerca del 80 % de la regresión corre automatizada.",
     responsibilities: [
-      "Diseñé y ejecuté estrategias de prueba (funcionales, integración, regresión) para sistemas de mediación y tasación de tráfico",
-      "Validé el procesamiento de CDRs y la reconciliación de datos a lo largo de la cadena de mediación, tasación y facturación",
-      "Desarrollé y mantuve tests automatizados para validar procesos críticos y acelerar los ciclos de regresión",
-      "Integré tests automatizados en pipelines de CI/CD con Jenkins",
-      "Generé evidencia, documentación técnica y trazabilidad entre requerimientos, casos de prueba y resultados",
-      "Dicté capacitaciones internas sobre herramientas de testing con IA y automatización",
+      "Diseñé y mantengo FAC Mediación, un framework Java 11 + Cucumber + JUnit 5 con ~80 features que procesa CDRs de tráfico de datos y voz (HPGW, HSGW, IMS, VoLTE, IoT, B2B) contra servidores UAT reales vía SSH/SFTP",
+      "Automaticé la regresión de Tasación en la migración de CBS Huawei a CBS Cloud: 100+ features sobre Web Services SOAP, 51 interfaces de CDR, 21 Web Services y CRs de negocio, con validación cruzada contra GaussDB",
+      "Estandaricé 55 pipelines de Jenkins y los flujos multifase (con esperas de hasta 24 h) bajo un mismo contrato de parámetros, reporte HTML y carga automática de resultados a Jira Xray",
+      "Encontré la causa raíz de fallos atribuidos al proveedor: el orden de elementos en plantillas SOAP violaba el XSD; lo corregí y desbloqueé la línea base de CRs",
+      "Desarrollo agentes de IA para los equipos de QA de Mediación y Tasación sobre una plataforma interna (Java 21, Spring Boot, Google ADK, Gemini, pgvector): agentes de diagnóstico y operación con 47 herramientas (SSH, parcheo de CDRs ASN.1, Jira, Xray), clasificación de riesgo SAFE/MEDIO/ALTO y confirmación humana antes de cada acción",
+      "Reduje la latencia del agente de seguimiento de Jira (antes 48–65 s por consulta) separando pasos de extracción en un modelo rápido y dejando el razonamiento en el modelo grande",
+      "Capacité al equipo en herramientas de automatización y desarrollo asistido por IA",
     ],
   },
   "Getnet Argentina": {
@@ -103,6 +106,35 @@ const experienceEs: Record<string, ExperienceEsOverlay> = {
 type ProjectEsOverlay = Partial<Pick<Project, "title" | "description">>;
 
 const projectsEs: Record<string, ProjectEsOverlay> = {
+  "qa-agents-lab": {
+    description:
+      "La sección de agentes de este sitio: 9 agentes de QA, un agente de desarrollo y un optimizador de prompts, que se usan en vivo eligiendo proveedor y modelo. Backend Spring Boot con router LLM multi-proveedor (Gemini, Ollama, OpenRouter): hedged requests sobre virtual threads, failover, rate limiting y progreso por SSE. 390 tests, incluidas evals de agentes con LLM-as-judge.",
+  },
+  "qa-core": {
+    description:
+      "Librería Java de orquestación LLM: el router extraído a un artefacto Maven reutilizable publicado vía JitPack (com.github.Vazquez-Ernesto:qa-core:0.1.0) y consumido por qa-flows, con 149 tests en verde.",
+  },
+  qadvanced: {
+    description:
+      "Plataforma de formación QA que fundé: mentorías 1:1, portal de alumno, roadmaps gamificados de 12 semanas, banco de 50 preguntas de entrevista e integración con Google Calendar/Meet para agendar sesiones.",
+  },
+  "harness-engineering": {
+    description:
+      "Agente de código para terminal construido desde cero: bucle agente, herramientas, permisos por acción (Sí / Siempre / No), gestión de contexto y soporte para Gemini, OpenRouter, Ollama y Anthropic, con interfaz web y CLI.",
+  },
+  "scenario-lab": {
+    description:
+      "Convierte historias de usuario en escenarios Gherkin trazados a cada criterio de aceptación (@AC-n). Un generador determinístico es la línea base que mide el aporte real del LLM.",
+  },
+  allgamesports: {
+    description:
+      "Juegos clásicos compilados de su código fuente a WebAssembly (Doom, Wolfenstein 3D) y homebrew de Game Boy, jugables en el navegador. Incluye parches C/C++ propios al motor y guardado con IndexedDB.",
+  },
+  vidriera: {
+    title: "Vidriera",
+    description:
+      "Servicio de sitios estáticos para comercios en Argentina, con demos de café y barbería y paquetes de precio cerrado.",
+  },
   portfolio: {
     title: "Portfolio de Ernesto Vázquez",
     description:
@@ -110,7 +142,7 @@ const projectsEs: Record<string, ProjectEsOverlay> = {
   },
   "playwright-animation": {
     description:
-      "Hub de automatización E2E para un sistema de gestión de personajes de anime. Demuestra patrones modernos de testing con Playwright y TypeScript, cubriendo flujos de usuario complejos y escenarios de validación de datos.",
+      "Proyecto full-stack de QA automation con Playwright que cubre pruebas de UI, API y base de datos sobre una app React + Node.js + PostgreSQL, con CI en GitHub Actions.",
   },
   "selenium-java": {
     description:
@@ -143,8 +175,8 @@ const skillCategoriesEs: Record<string, string> = {
   "Test Automation": "Automatización de Pruebas",
   Languages: "Lenguajes",
   "Infrastructure & DevOps": "Infraestructura y DevOps",
-  "Testing Methodologies": "Metodologías de Testing",
-  "Data & APIs": "Datos y APIs",
+  "Methodologies & Practices": "Metodologías y Prácticas",
+  "Backend, Data & APIs": "Backend, Datos y APIs",
   "AI in QA": "IA en QA",
 };
 

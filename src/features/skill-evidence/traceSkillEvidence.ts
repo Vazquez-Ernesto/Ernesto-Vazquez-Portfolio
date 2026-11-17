@@ -66,6 +66,11 @@ const cert = (name: string, detail: LocalText): CuratedNode => ({
 const CERT_SELENIUM_PYTHON = "Domina la Automatización Web con Python y Selenium";
 const CERT_PLAYWRIGHT = "Curso Playwright con TypeScript E2E";
 const CERT_CYPRESS = "Cypress E2E Automation Testing con JS, a fondo!";
+const CFOTECH = "CFOTech IT Global Services";
+const AGENTS_LAB_HREF = "#agents";
+
+const agentsLab = (detail: LocalText): CuratedNode =>
+  project("qa-agents-lab", "QA Agents Lab", detail, AGENTS_LAB_HREF);
 
 const evidenceBySkill: Record<string, CuratedNode[]> = {
   "Selenium WebDriver": [
@@ -371,6 +376,131 @@ const evidenceBySkill: Record<string, CuratedNode[]> = {
     job("Getnet Argentina", {
       en: "POSNET terminal billing reconciliation.",
       es: "Reconciliación de facturación de terminales POSNET.",
+    }),
+  ],
+  "Page Object Model": [
+    project(
+      "selenium-java",
+      "Selenium Java Automation Framework",
+      {
+        en: "Page Object Model in a public Selenium + Cucumber framework.",
+        es: "Page Object Model en un framework público de Selenium + Cucumber.",
+      },
+      "https://github.com/Vazquez-Ernesto/selenium-java-automation",
+    ),
+    project(
+      "cypress-orangehrm",
+      "Cypress OrangeHRM Automation",
+      {
+        en: "Page objects organizing the public Cypress suite.",
+        es: "Page objects que organizan la suite pública de Cypress.",
+      },
+      "https://github.com/Vazquez-Ernesto/cypress-orangehrm-automation",
+    ),
+  ],
+  "GitHub Actions": [
+    project(
+      "playwright-animation",
+      "Playwright Animation Character Hub",
+      {
+        en: "UI, API and DB suites running in GitHub Actions CI.",
+        es: "Suites de UI, API y base de datos corriendo en CI con GitHub Actions.",
+      },
+      "https://github.com/Vazquez-Ernesto/playwright-animate-character-hub-e2e",
+    ),
+    project(
+      "allgamesports",
+      "allgamesports",
+      {
+        en: "Deploy to GitHub Pages on every push to main.",
+        es: "Deploy a GitHub Pages en cada push a main.",
+      },
+      "https://github.com/Vazquez-Ernesto/allgamesports",
+    ),
+  ],
+  "C (WebAssembly)": [
+    project(
+      "allgamesports",
+      "allgamesports",
+      {
+        en: "C game engines compiled to WebAssembly with Emscripten, with own patches.",
+        es: "Motores de juego en C compilados a WebAssembly con Emscripten, con parches propios.",
+      },
+      "https://github.com/Vazquez-Ernesto/allgamesports",
+    ),
+  ],
+  "Cloudflare Workers": [
+    project(
+      "vidriera",
+      "Vidriera",
+      {
+        en: "Static site published as a Cloudflare Worker with assets.",
+        es: "Sitio estático publicado como Worker de Cloudflare con assets.",
+      },
+      "https://vidriera.ernestoalexisvazquez.workers.dev/",
+    ),
+  ],
+  Vercel: [
+    project(
+      "portfolio",
+      "Ernesto Vázquez Portfolio",
+      {
+        en: "This site, deployed on Vercel from main.",
+        es: "Este sitio, deployado en Vercel desde main.",
+      },
+      "https://github.com/Vazquez-Ernesto/Ernesto-Vazquez-Portfolio",
+    ),
+  ],
+  "Spring Boot": [
+    agentsLab({
+      en: "Spring Boot backend that serves the live agents of this site.",
+      es: "Backend Spring Boot que sirve los agentes en vivo de este sitio.",
+    }),
+    job(CFOTECH, {
+      en: "Spring Boot multi-agent backend for the Mediation and Rating QA teams.",
+      es: "Backend multi-agente en Spring Boot para los equipos de QA de Mediación y Tasación.",
+    }),
+  ],
+  "SOAP Web Services": [
+    job(CFOTECH, {
+      en: "Rating regression over Huawei CBS SOAP web services, validated against the XSD.",
+      es: "Regresión de Tasación sobre Web Services SOAP de CBS Huawei, validados contra el XSD.",
+    }),
+  ],
+  "PostgreSQL + pgvector": [
+    job(CFOTECH, {
+      en: "pgvector embeddings store for the internal QA agent platform.",
+      es: "Almacén de embeddings con pgvector para la plataforma interna de agentes de QA.",
+    }),
+  ],
+  "LLM Agents (Google ADK)": [
+    job(CFOTECH, {
+      en: "Diagnostics and operations agents built with Google ADK and Gemini.",
+      es: "Agentes de diagnóstico y operación construidos con Google ADK y Gemini.",
+    }),
+  ],
+  "Multi-provider LLM Routing": [
+    agentsLab({
+      en: "Router over Gemini, Ollama and OpenRouter with hedged requests and failover.",
+      es: "Router sobre Gemini, Ollama y OpenRouter con hedged requests y failover.",
+    }),
+  ],
+  "LLM Evals (LLM-as-judge)": [
+    agentsLab({
+      en: "Agent evals with an LLM judge and recorded baseline runs.",
+      es: "Evals de agentes con un juez LLM y corridas de línea base registradas.",
+    }),
+  ],
+  "Tool Calling": [
+    job(CFOTECH, {
+      en: "Agents with 47 tools (SSH, CDR patching, Jira, Xray) and risk-based confirmations.",
+      es: "Agentes con 47 herramientas (SSH, parcheo de CDRs, Jira, Xray) y confirmaciones según riesgo.",
+    }),
+  ],
+  "Prompt Engineering": [
+    agentsLab({
+      en: "Prompt optimizer agent available live on this site.",
+      es: "Agente optimizador de prompts disponible en vivo en este sitio.",
     }),
   ],
 };

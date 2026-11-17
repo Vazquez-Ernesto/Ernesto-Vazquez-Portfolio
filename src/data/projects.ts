@@ -10,6 +10,66 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    id: "qa-agents-lab",
+    title: "QA Agents Lab",
+    description:
+      "The agents section of this site: 9 QA agents, a development agent and a prompt optimizer, used live by choosing provider and model. Spring Boot backend with a multi-provider LLM router (Gemini, Ollama, OpenRouter): hedged requests on virtual threads, failover, rate limiting and SSE progress events. 390 tests including agent evals with LLM-as-judge.",
+    technologies: ["Java 21", "Spring Boot", "Docker", "Render", "SSE", "LLM Evals"],
+    role: "personal",
+  },
+  {
+    id: "qa-core",
+    title: "qa-core + qa-flows",
+    description:
+      "Java LLM orchestration library: the LLM router extracted into a reusable Maven artifact published via JitPack (com.github.Vazquez-Ernesto:qa-core:0.1.0) and consumed by qa-flows, with 149 passing tests.",
+    technologies: ["Java 21", "Maven", "JitPack", "LLM Routing"],
+    role: "framework",
+  },
+  {
+    id: "qadvanced",
+    title: "QAdvanced",
+    description:
+      "QA training platform I founded: 1:1 mentoring, student portal, gamified 12-week roadmaps, a 50-question interview bank and Google Calendar/Meet integration to book sessions.",
+    technologies: ["React", "Vite", "Firebase", "Cloud Functions", "Vercel"],
+    live: "https://qadvanced-io.vercel.app/",
+    role: "personal",
+  },
+  {
+    id: "harness-engineering",
+    title: "harness-engineering",
+    description:
+      "Terminal coding agent built from scratch: agent loop, tools, per-action permissions (Yes / Always / No), context management and support for Gemini, OpenRouter, Ollama and Anthropic, with a web UI and a CLI.",
+    technologies: ["TypeScript", "Node.js", "Claude API", "GitHub Actions"],
+    role: "framework",
+  },
+  {
+    id: "scenario-lab",
+    title: "scenario-lab",
+    description:
+      "Turns user stories into Gherkin scenarios traced to each acceptance criterion (@AC-n). A deterministic generator is the baseline that measures the LLM's real contribution.",
+    technologies: ["Java 21", "Hexagonal Architecture", "Gherkin", "JUnit 5"],
+    role: "framework",
+  },
+  {
+    id: "allgamesports",
+    title: "allgamesports",
+    description:
+      "Classic games compiled from source to WebAssembly (Doom, Wolfenstein 3D) plus Game Boy homebrew, playable in the browser. Includes my own C/C++ engine patches and IndexedDB saves.",
+    technologies: ["C", "Emscripten", "WebAssembly", "Vite", "GitHub Actions"],
+    github: "https://github.com/Vazquez-Ernesto/allgamesports",
+    live: "https://vazquez-ernesto.github.io/allgamesports/",
+    role: "personal",
+  },
+  {
+    id: "vidriera",
+    title: "Vidriera",
+    description:
+      "Static website service for small businesses in Argentina, with café and barbershop demos and fixed-price packages.",
+    technologies: ["Astro", "Tailwind CSS v4", "Cloudflare Workers"],
+    live: "https://vidriera.ernestoalexisvazquez.workers.dev/",
+    role: "personal",
+  },
+  {
     id: "portfolio",
     title: "Ernesto Vázquez Portfolio",
     description:
@@ -23,8 +83,8 @@ export const projects: Project[] = [
     id: "playwright-animation",
     title: "Playwright Animation Character Hub",
     description:
-      "E2E test automation hub for anime character management system. Demonstrates modern Playwright testing patterns with TypeScript, covering complex user workflows and data validation scenarios.",
-    technologies: ["Playwright", "TypeScript", "E2E Testing", "Vercel"],
+      "Full-stack QA automation project with Playwright covering UI, API and database tests over a React + Node.js + PostgreSQL app, with GitHub Actions CI.",
+    technologies: ["Playwright", "TypeScript", "PostgreSQL", "GitHub Actions", "Vercel"],
     github: "https://github.com/Vazquez-Ernesto/playwright-animate-character-hub-e2e",
     live: "https://playwright-anime-character-hub-e2e.vercel.app/",
     role: "demonstration",

@@ -141,9 +141,9 @@ export interface UiStrings {
 
 const en: UiStrings = {
   meta: {
-    title: "Ernesto Vázquez — QA Automation Engineer & Full Stack Developer",
+    title: "Ernesto Vázquez — QA Automation Engineer / SDET · AI Quality Engineering",
     description:
-      "QA Automation Engineer specialized in banking and telecom systems with 5+ years of experience. Founder of QAdvanced. Exploring AI in QA.",
+      "QA Automation Engineer with 5+ years in banking and telecom. Java + Cucumber frameworks for mission-critical systems and LLM agents for QA in production. Founder of QAdvanced.",
   },
   nav: {
     about: "About",
@@ -161,7 +161,7 @@ const en: UiStrings = {
   },
   hero: {
     greeting: "Hi, I'm",
-    title: "QA Automation Engineer & Full Stack Developer with AI",
+    title: "QA Automation Engineer / SDET · AI Quality Engineering",
     taglinePre: "Building quality systems for banking & telecom. Founder of",
     taglineLink: "QAdvanced",
     viewWork: "View My Work",
@@ -304,9 +304,9 @@ const en: UiStrings = {
 
 const es: UiStrings = {
   meta: {
-    title: "Ernesto Vázquez — QA Automation Engineer & Full Stack Developer",
+    title: "Ernesto Vázquez — QA Automation Engineer / SDET · AI Quality Engineering",
     description:
-      "QA Automation Engineer especializado en sistemas bancarios y de telecomunicaciones con más de 5 años de experiencia. Fundador de QAdvanced. Explorando IA en QA.",
+      "QA Automation Engineer con más de 5 años en banca y telecomunicaciones. Frameworks Java + Cucumber para sistemas críticos y agentes LLM para QA en producción. Fundador de QAdvanced.",
   },
   nav: {
     about: "Sobre mí",
@@ -324,7 +324,7 @@ const es: UiStrings = {
   },
   hero: {
     greeting: "Hola, soy",
-    title: "QA Automation Engineer & Full Stack Developer con IA",
+    title: "QA Automation Engineer / SDET · Ingeniería de Calidad con IA",
     taglinePre: "Construyendo sistemas de calidad para banca y telecom. Fundador de",
     taglineLink: "QAdvanced",
     viewWork: "Ver mi trabajo",
