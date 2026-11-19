@@ -26,7 +26,7 @@ export const profile: Profile = {
     "LLM Agents for QA in Java",
   ],
   location: "Buenos Aires, CABA, Argentina",
-  email: "ernestoalexisvazquez@gmail.com",
+  email: "qaavanced@gmail.com",
   phone: "+54 3704824222",
   bio: `QA Automation Engineer with 5+ years in banking and telecom, specialized in automating mission-critical backend systems: web services, batch processes and CI/CD pipelines. I build Java + Cucumber frameworks that run against real environments, collect evidence and report results automatically.
 

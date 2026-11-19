@@ -307,7 +307,7 @@ Buenos Aires, Argentina
 - LinkedIn: [ernestoavazquez](https://www.linkedin.com/in/ernestoavazquez)
 - GitHub: [Vazquez-Ernesto](https://github.com/Vazquez-Ernesto)
 - QAdvanced: [qadvanced-io.vercel.app](https://qadvanced-io.vercel.app)
-- Email: ernestoalexisvazquez@gmail.com
+- Email: qaavanced@gmail.com
 
 ---
 
