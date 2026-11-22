@@ -16,7 +16,7 @@ export const experience: WorkExperience[] = [
   {
     company: "CFOTech IT Global Services",
     role: "QA Automation + AI Engineer",
-    contractType: "Client: Personal (Telecom Argentina) — Mediation & Rating teams",
+    contractType: "Client: telecom operator (confidential) — Mediation & Rating teams",
     period: "Jun 2025 – Present",
     startDate: "2025-06",
     endDate: null,

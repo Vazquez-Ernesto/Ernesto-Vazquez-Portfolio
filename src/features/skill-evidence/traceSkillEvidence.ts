@@ -84,8 +84,8 @@ const evidenceBySkill: Record<string, CuratedNode[]> = {
       "https://github.com/Vazquez-Ernesto/selenium-java-automation",
     ),
     job("CFOTech IT Global Services", {
-      en: "Daily Selenium automation for Telecom Argentina mediation and rating regression suites.",
-      es: "Automatización diaria con Selenium para regresiones de mediación y tasación en Telecom Argentina.",
+      en: "Daily Selenium automation for a telecom operator's mediation and rating regression suites.",
+      es: "Automatización diaria con Selenium para regresiones de mediación y tasación de un operador de telecomunicaciones.",
     }),
     cert(CERT_SELENIUM_PYTHON, {
       en: "Formal training on web automation with Selenium.",

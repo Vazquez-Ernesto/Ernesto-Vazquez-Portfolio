@@ -209,7 +209,7 @@ export const qaAgentCatalog: QaAgentEntry[] = [
       en: "We release a new billing module for a telecom company in 6 weeks. It rates prepaid and postpaid calls from CDR files, applies promotions, and generates invoices. Team: 4 developers and 2 QA engineers. Today all tests are manual.",
       es: "En 6 semanas sale un módulo nuevo de facturación para una telco. Tasa llamadas prepagas y pospagas desde archivos CDR, aplica promociones y genera facturas. Equipo: 4 devs y 2 QA. Hoy todas las pruebas son manuales.",
     },
-    evidence: [job("CFOTech — testing strategies for Telecom", "CFOTech — estrategias de testing para Telecom")],
+    evidence: [job("CFOTech — testing strategies for a telecom operator", "CFOTech — estrategias de testing para un operador de telecomunicaciones")],
   },
   {
     id: "sql-data-validator",
@@ -300,7 +300,6 @@ export const qaAgentCatalog: QaAgentEntry[] = [
       es: "haceme casos de prueba para el login de mi app",
     },
     evidence: [
-      job("CFOTech — internal training on AI tools for testing", "CFOTech — capacitación interna en herramientas de IA para testing"),
       { label: { en: "AI in QA: prompt engineering", es: "IA en QA: prompt engineering" }, maturity: "H1", href: "#skills" },
     ],
   },

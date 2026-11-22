@@ -44,7 +44,7 @@ type ExperienceEsOverlay = Pick<
 const experienceEs: Record<string, ExperienceEsOverlay> = {
   "CFOTech IT Global Services": {
     role: "QA Automation + IA",
-    contractType: "Cliente: Personal (Telecom Argentina) — equipos de Mediación y Tasación",
+    contractType: "Cliente: operador de telecomunicaciones (confidencial) — equipos de Mediación y Tasación",
     period: "Jun 2025 – Actualidad",
     description:
       "Automatización de pruebas y agentes de IA para los equipos de QA de plataformas core de un operador de telecomunicaciones: servicios de backend, procesos batch y pipelines CI/CD.",
